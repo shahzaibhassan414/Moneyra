@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../Constants/custom_colors.dart';
+import 'package:moneyra/Constants/Constants.dart';
+import '../../Constants/custom_colors.dart';
+import '../AuthScreen/auth_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -11,21 +13,6 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-
-  final List<Map<String, String>> _onboardingData = [
-    {
-      'title': 'Track your income & expenses',
-      'description': 'Easily manage your daily transactions with AI categorization.',
-    },
-    {
-      'title': 'Get AI insights & suggestions',
-      'description': 'Our AI agent analyzes your spending and gives personalized advice.',
-    },
-    {
-      'title': 'Stay on top of your money automatically',
-      'description': 'Automate your savings and reach your financial goals faster.',
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +29,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _currentPage = index;
                   });
                 },
-                itemCount: _onboardingData.length,
+                itemCount: Constants.onboardingData.length,
                 itemBuilder: (context, index) => Padding(
                   padding: const EdgeInsets.all(40.0),
                   child: Column(
@@ -51,7 +38,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       const Icon(Icons.account_balance_wallet, size: 100, color: CustomColors.primaryBlue),
                       const SizedBox(height: 40),
                       Text(
-                        _onboardingData[index]['title']!,
+                        Constants.onboardingData[index]['title']!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 24,
@@ -61,7 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        _onboardingData[index]['description']!,
+                        Constants.onboardingData[index]['description']!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 16,
@@ -76,14 +63,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                _onboardingData.length,
+                Constants.onboardingData.length,
                 (index) => Container(
                   margin: const EdgeInsets.all(4),
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _currentPage == index ? CustomColors.primaryGreen : Colors.grey.shade300,
+                    color: _currentPage == index ? CustomColors.primaryBlue : Colors.grey.shade300,
                   ),
                 ),
               ),
@@ -92,11 +79,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.all(40.0),
               child: SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 54,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (_currentPage == _onboardingData.length - 1) {
-                      // Navigate to Home or Login
+                    if (_currentPage == Constants.onboardingData.length - 1) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AuthScreen()),
+                      );
                     } else {
                       _pageController.nextPage(
                         duration: const Duration(milliseconds: 300),
@@ -105,13 +95,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: CustomColors.primaryGreen,
+                    backgroundColor: CustomColors.primaryBlue,
                     foregroundColor: Colors.white,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: Text(_currentPage == _onboardingData.length - 1 ? 'Get Started' : 'Next'),
+                  child: Text(
+                    _currentPage == Constants.onboardingData.length - 1 ? 'Get Started' : 'Next',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ),

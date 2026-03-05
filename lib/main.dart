@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'Theme/dark_theme.dart';
 import 'Theme/lightTheme.dart';
-import 'screens/splash_screen.dart';
+import 'screens/SplashScreen/splash_screen.dart';
 
 void main() {
   runApp(const MoneyraApp());
