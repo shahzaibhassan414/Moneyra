@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:moneyra/Screens/AuthScreen/Widgets/auth_toggle_text.dart';
+import 'package:moneyra/Utils/custom_button.dart';
+import 'package:moneyra/Utils/custom_text_field.dart';
+import '../../Constants/custom_colors.dart';
+import '../BottomNav/bottom_nav.dart';
 
 class SignInWidget extends StatelessWidget {
   final VoidCallback onToggle;
@@ -18,14 +23,14 @@ class SignInWidget extends StatelessWidget {
           style: TextStyle(fontSize: 18, color: CustomColors.secondaryText),
         ),
         const SizedBox(height: 48),
-        _AuthTextField(
+        CustomTextField(
           label: 'Email Address',
           hint: 'name@example.com',
           controller: _emailController,
           icon: Icons.email_outlined,
         ),
         const SizedBox(height: 20),
-        _AuthTextField(
+        CustomTextField(
           label: 'Password',
           hint: 'Enter your password',
           controller: _passwordController,
@@ -36,16 +41,25 @@ class SignInWidget extends StatelessWidget {
           alignment: Alignment.centerRight,
           child: TextButton(
             onPressed: () {},
-            child: const Text('Forgot Password?', style: TextStyle(color: CustomColors.primaryBlue, fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Forgot Password?',
+              style: TextStyle(
+                color: CustomColors.primaryBlue,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 32),
-        _PrimaryButton(
+        CustomButton(
           text: 'Sign In',
-          onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const BottomNavWrapper())),
+          onPressed: () => Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const BottomNavWrapper()),
+          ),
         ),
         const SizedBox(height: 32),
-        _AuthToggleText(
+        AuthToggleText(
           question: "Don't have an account? ",
           action: "Sign Up",
           onTap: onToggle,
