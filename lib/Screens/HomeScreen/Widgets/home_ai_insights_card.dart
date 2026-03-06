@@ -6,21 +6,21 @@ Widget homeAIInsightCard(String text) {
     width: 280,
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: CustomColors.lightBlue.withValues(alpha: 0.08),
+      color: CustomColors.lightBlue.withOpacity(0.08),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: CustomColors.lightBlue.withValues(alpha:0.1)),
+      border: Border.all(color: CustomColors.lightBlue.withOpacity(0.1)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 20),
+            const Icon(Icons.auto_awesome_rounded, color: CustomColors.amber, size: 20),
             const SizedBox(width: 8),
             Text(
               'AI Tip',
               style: TextStyle(
-                color: CustomColors.lightBlue.withValues(alpha:0.8),
+                color: CustomColors.lightBlue.withOpacity(0.8),
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),
@@ -49,7 +49,7 @@ Widget homeAIInsightCard(String text) {
               onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: CustomColors.lightBlue,
-                foregroundColor: Colors.white,
+                foregroundColor: CustomColors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

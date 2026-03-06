@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../../Constants/custom_colors.dart';
 
 Widget homeBalanceCard(double balance) {
@@ -25,13 +24,13 @@ Widget homeBalanceCard(double balance) {
       children: [
         const Text(
           'Current Balance',
-          style: TextStyle(color: Colors.white70, fontSize: 14),
+          style: TextStyle(color: CustomColors.white70, fontSize: 14),
         ),
         const SizedBox(height: 8),
         Text(
           '\$${balance.toStringAsFixed(2)}',
           style: const TextStyle(
-            color: Colors.white,
+            color: CustomColors.white,
             fontSize: 36,
             fontWeight: FontWeight.bold,
           ),
@@ -48,7 +47,7 @@ Widget homeBalanceCard(double balance) {
                   margin: const EdgeInsets.symmetric(horizontal: 1),
                   height: (10 + (index % 5) * 6).toDouble(),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
+                    color: CustomColors.white.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

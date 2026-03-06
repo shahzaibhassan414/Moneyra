@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../Constants/custom_colors.dart';
 
 Widget homeTopSpendingRow(
     String label,
@@ -25,7 +26,7 @@ Widget homeTopSpendingRow(
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: percent,
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: CustomColors.grey200,
             valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 8,
           ),

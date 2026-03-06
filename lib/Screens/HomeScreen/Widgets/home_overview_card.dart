@@ -12,9 +12,9 @@ Widget homeOverviewCard({
   return Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: CustomColors.white,
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: Colors.grey.shade100),
+      border: Border.all(color: CustomColors.grey100),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +58,7 @@ Widget homeOverviewCard({
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isPositive ? Colors.green : Colors.red,
+            color: isPositive ? CustomColors.green : CustomColors.red,
           ),
         ),
       ],

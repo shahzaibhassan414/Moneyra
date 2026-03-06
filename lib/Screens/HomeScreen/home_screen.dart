@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../Constants/custom_colors.dart';
 import '../../Utils/AppBars/app_bar_home_screen.dart';
+import '../AddTransactionScreen/add_transaction_screen.dart';
 import 'Widgets/home_ai_insights_card.dart';
 import 'Widgets/home_balance_card.dart';
 import 'Widgets/home_overview_card.dart';
@@ -19,7 +20,6 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Greeting
             const Text(
               'Good morning, Alex!',
               style: TextStyle(
@@ -67,7 +67,6 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            // Top Spending Categories
             const Text(
               'Top Spending',
               style: TextStyle(
@@ -77,13 +76,12 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            homeTopSpendingRow('Food 🍔', 450, 0.4, Colors.orange),
+            homeTopSpendingRow('Food 🍔', 450, 0.4, CustomColors.orange),
             homeTopSpendingRow('Rent 🏠', 900, 0.8, CustomColors.primaryBlue),
-            homeTopSpendingRow('Entertainment 🎮', 200, 0.2, Colors.purple),
+            homeTopSpendingRow('Entertainment 🎮', 200, 0.2, CustomColors.purple),
 
             const SizedBox(height: 32),
 
-            // AI Suggestions / Insights
             const Text(
               'AI Insights',
               style: TextStyle(
@@ -107,14 +105,19 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 80), // Space for FAB
+            const SizedBox(height: 80),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddTransactionScreen()),
+          );
+        },
         backgroundColor: CustomColors.primaryBlue,
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+        child: const Icon(Icons.add_rounded, color: CustomColors.white, size: 32),
       ),
     );
   }

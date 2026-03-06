@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../Constants/custom_colors.dart';
 import '../HomeScreen/home_screen.dart';
+import '../BudgetScreen/budget_screen.dart';
+import '../ReportsScreen/reports_screen.dart';
+import '../ProfileScreen/profile_screen.dart';
 
 class BottomNavWrapper extends StatefulWidget {
   const BottomNavWrapper({super.key});
@@ -14,9 +17,9 @@ class _BottomNavWrapperState extends State<BottomNavWrapper> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const Center(child: Text('Budget Overview')),
-    const Center(child: Text('Reports & Trends')),
-    const Center(child: Text('Profile & Settings')),
+    const BudgetScreen(),
+    const ReportsScreen(),
+    const ProfileScreen(),
   ];
 
   @override
@@ -27,7 +30,7 @@ class _BottomNavWrapperState extends State<BottomNavWrapper> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: CustomColors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -45,7 +48,7 @@ class _BottomNavWrapperState extends State<BottomNavWrapper> {
           showSelectedLabels: true,
           showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
+          backgroundColor: CustomColors.white,
           elevation: 0,
           selectedFontSize: 12,
           unselectedFontSize: 12,
