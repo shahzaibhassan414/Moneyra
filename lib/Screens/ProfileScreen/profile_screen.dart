@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moneyra/Screens/AuthScreen/auth_screen.dart';
 import 'package:moneyra/Screens/ProfileScreen/Widgets/profile_header_widget.dart';
 import '../../Constants/custom_colors.dart';
 import '../../Utils/custom_button_red.dart';
@@ -18,7 +19,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _budgetAlerts = true;
   bool _aiSuggestions = true;
   bool _monthlyReports = false;
-  bool _darkMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  profileFinancialPreferences(),
+                  ProfileFinancialPreferences(),
                   const SizedBox(height: 24),
                   ProfileSectionTitle(
                     title: 'Notifications',
@@ -73,27 +73,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  ProfileSectionTitle(
-                    title: 'Settings',
-                    children: [
-                      CustomToggleButton(
-                        title: 'Dark Mode',
-                        value: _darkMode,
-                        onChanged: (v) => setState(() => _darkMode = v),
-                      ),
-
-                      SettingsTile(
-                        icon: Icons.language_outlined,
-                        title: 'Language',
-                        trailing: 'English',
-                      ),
-                      SettingsTile(
-                        icon: Icons.info_outline,
-                        title: 'App Version',
-                        trailing: '1.0.0',
-                      ),
-                    ],
-                  ),
+                  // ProfileSectionTitle(
+                  //   title: 'Settings',
+                  //   children: [
+                  //     SettingsTile(
+                  //       icon: Icons.language_outlined,
+                  //       title: 'Language',
+                  //       trailing: 'English',
+                  //     ),
+                  //     SettingsTile(
+                  //       icon: Icons.info_outline,
+                  //       title: 'App Version',
+                  //       trailing: '1.0.0',
+                  //     ),
+                  //   ],
+                  // ),
                   const SizedBox(height: 24),
                   ProfileSectionTitle(
                     title: 'Support',
@@ -113,7 +107,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 40),
-                  CustomButtonRed(text: 'Log Out', onTap: () {}),
+                  CustomButtonRed(
+                    text: 'Log Out',
+                    onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => AuthScreen()),
+                        (route) => false,
+                      );
+                    },
+                  ),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -122,5 +125,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+    ;
   }
 }

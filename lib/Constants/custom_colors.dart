@@ -14,12 +14,14 @@ class CustomColors {
 
   // Background & Text Colors
   static const Color backgroundGray = Color(0xFFF9FAFB);
+  static const Color backgroundBlack = Color(0xFF121212);
   static const Color primaryText = Color(0xFF111827);
   static const Color secondaryText = Color(0xFF6B7280);
 
   // Standard Colors
   static const Color white = Colors.white;
   static const Color white70 = Colors.white70;
+  static const Color darkBlack = Color(0xFF1E1E1E);
   static const Color black = Colors.black;
   static const Color transparent = Colors.transparent;
   static const Color grey = Colors.grey;
@@ -31,3 +33,6 @@ class CustomColors {
   static const Color green = Colors.green;
   static const Color red = Colors.red;
 }
+
+
+

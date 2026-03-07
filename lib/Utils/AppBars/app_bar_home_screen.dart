@@ -14,31 +14,27 @@ class AppBarHomeScreen extends StatefulWidget implements PreferredSizeWidget {
 class _AppBarHomeScreenState extends State<AppBarHomeScreen> {
   @override
   Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      title: const Text(
+      centerTitle: false,
+      title:  Text(
         'Moneyra',
         style: TextStyle(
-          color: CustomColors.primaryBlue,
+          color: isDark ? CustomColors.primaryGreen :CustomColors.primaryBlue,
           fontWeight: FontWeight.bold,
         ),
       ),
       actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(
-            Icons.notifications_none_rounded,
-            color: CustomColors.primaryText,
-          ),
-        ),
-        const SizedBox(width: 8),
-        const CircleAvatar(
-          radius: 18,
-          backgroundColor: CustomColors.primaryBlue,
-          child: Icon(Icons.person, color: Colors.white, size: 20),
-        ),
-        const SizedBox(width: 20),
+        // IconButton(
+        //   onPressed: () {},
+        //   icon:  Icon(
+        //     Icons.notifications_none_rounded,
+        //     color: isDark ? CustomColors.white : CustomColors.primaryText,
+        //   ),
+        // ),
+        // const SizedBox(width: 20),
       ],
     );
   }

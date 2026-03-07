@@ -23,35 +23,10 @@ class ProfileHeaderWidget extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Stack(
-            children: [
-              const CircleAvatar(
-                radius: 50,
-                backgroundColor: CustomColors.white,
-                child: CircleAvatar(
-                  radius: 46,
-                  backgroundImage: NetworkImage(
-                    'https://i.pravatar.cc/150?u=moneyra',
-                  ), // Placeholder
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: CustomColors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.edit,
-                    size: 20,
-                    color: CustomColors.primaryBlue,
-                  ),
-                ),
-              ),
-            ],
+          const Icon(
+            Icons.account_balance_wallet,
+            size: 100,
+            color: CustomColors.primaryGreen,
           ),
           const SizedBox(height: 16),
           const Text(

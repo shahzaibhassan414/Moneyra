@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Constants {
 
   static final List<Map<String, String>> onboardingData = [
@@ -14,4 +16,19 @@ class Constants {
       'description': 'Automate your savings and reach your financial goals faster.',
     },
   ];
+
+
+  static final List<Map<String, dynamic>> transactionCategories = [
+    {'name': 'Food', 'icon': Icons.restaurant_rounded, 'emoji': '🍔'},
+    {'name': 'Rent', 'icon': Icons.home_rounded, 'emoji': '🏠'},
+    {
+      'name': 'Entertainment',
+      'icon': Icons.sports_esports_rounded,
+      'emoji': '🎮',
+    },
+    {'name': 'Transport', 'icon': Icons.directions_car_rounded, 'emoji': '🚗'},
+    {'name': 'Shopping', 'icon': Icons.shopping_bag_rounded, 'emoji': '🛍️'},
+    {'name': 'Salary', 'icon': Icons.payments_rounded, 'emoji': '💰'},
+  ];
+
 }

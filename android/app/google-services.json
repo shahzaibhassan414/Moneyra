@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "473993815330",
+    "project_id": "moneyra-eb04d",
+    "storage_bucket": "moneyra-eb04d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:473993815330:android:fb887fb6daada4a0def17b",
+        "android_client_info": {
+          "package_name": "com.example.moneyra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9bXvxje37KMhqrFRbrJ42v44jcBbuz8o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

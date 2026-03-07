@@ -22,56 +22,45 @@ class _SettingsTileState extends State<SettingsTile> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: Material(
-        shadowColor: CustomColors.primaryGreen.withOpacity(0.1),
-        surfaceTintColor: CustomColors.primaryGreen.withOpacity(0.05),
+        shadowColor: CustomColors.primaryGreen.withValues(alpha: 0.1),
+        surfaceTintColor: CustomColors.primaryGreen.withValues(alpha: 0.05),
         child: InkWell(
-          onTap: (){},
-            splashColor: CustomColors.primaryGreen.withOpacity(0.1),
-            hoverColor: CustomColors.primaryGreen.withOpacity(0.05),
+          onTap: () {},
+          splashColor: CustomColors.primaryGreen.withValues(alpha: 0.1),
+          hoverColor: CustomColors.primaryGreen.withValues(alpha: 0.05),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 15,horizontal: 15),
+            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   spacing: 10,
                   children: [
-                    Icon(widget.icon, size: 22, color: CustomColors.primaryBlue),
+                    Icon(
+                      widget.icon,
+                      size: 22,
+                      color: CustomColors.primaryBlue,
+                    ),
                     Text(widget.title, style: const TextStyle(fontSize: 15)),
                   ],
                 ),
                 widget.trailing != null
-                      ? Text(
-                          widget.trailing!,
-                          style: const TextStyle(color: CustomColors.secondaryText),
-                        )
-                      : const Icon(
-                          Icons.chevron_right,
-                          size: 20,
+                    ? Text(
+                        widget.trailing!,
+                        style: const TextStyle(
                           color: CustomColors.secondaryText,
                         ),
+                      )
+                    : const Icon(
+                        Icons.chevron_right,
+                        size: 20,
+                        color: CustomColors.secondaryText,
+                      ),
               ],
             ),
           ),
         ),
       ),
     );
-    //   ListTile(
-    //   splashColor: CustomColors.primaryGreen.withOpacity(0.1),
-    //   hoverColor: CustomColors.primaryGreen.withOpacity(0.05),
-    //   leading: Icon(widget.icon, size: 22, color: CustomColors.primaryBlue),
-    //   title: Text(widget.title, style: const TextStyle(fontSize: 15)),
-    //   trailing: widget.trailing != null
-    //       ? Text(
-    //           widget.trailing!,
-    //           style: const TextStyle(color: CustomColors.secondaryText),
-    //         )
-    //       : const Icon(
-    //           Icons.chevron_right,
-    //           size: 20,
-    //           color: CustomColors.secondaryText,
-    //         ),
-    //   onTap: () {},
-    // );
   }
 }

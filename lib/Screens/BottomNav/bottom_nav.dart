@@ -30,7 +30,7 @@ class _BottomNavWrapperState extends State<BottomNavWrapper> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: CustomColors.black.withOpacity(0.05),
+              color: CustomColors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -45,10 +45,10 @@ class _BottomNavWrapperState extends State<BottomNavWrapper> {
           },
           selectedItemColor: CustomColors.primaryBlue,
           unselectedItemColor: CustomColors.secondaryText,
+          backgroundColor: CustomColors.white,
           showSelectedLabels: true,
           showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed,
-          backgroundColor: CustomColors.white,
           elevation: 0,
           selectedFontSize: 12,
           unselectedFontSize: 12,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../Constants/custom_colors.dart';
 
-
 class ProfileSectionTitle extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -17,7 +16,7 @@ class ProfileSectionTitle extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: CustomColors.primaryText,
@@ -26,7 +25,7 @@ class ProfileSectionTitle extends StatelessWidget {
           ),
         ),
         Container(
-          padding: EdgeInsets.symmetric(vertical: 10,horizontal: 10),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
           decoration: BoxDecoration(
             color: CustomColors.white,
             borderRadius: BorderRadius.circular(20),
@@ -38,8 +37,7 @@ class ProfileSectionTitle extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
-              children: children),
+          child: Column(children: children),
         )
       ],
     );

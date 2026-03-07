@@ -20,14 +20,14 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Good morning, Alex!',
               style: TextStyle(
                 fontSize: 16,
                 color: CustomColors.secondaryText,
               ),
             ),
-            const Text(
+            Text(
               "Here's your balance.",
               style: TextStyle(
                 fontSize: 20,
@@ -37,13 +37,13 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            homeBalanceCard(2450.50),
+            HomeBalanceCard(balance: 2450.50),
             const SizedBox(height: 24),
 
             Row(
               children: [
                 Expanded(
-                  child: homeOverviewCard(
+                  child: HomeOverviewCard(
                     title: 'Income',
                     amount: '4,200.00',
                     percentage: '+12%',
@@ -54,7 +54,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: homeOverviewCard(
+                  child: HomeOverviewCard(
                     title: 'Expenses',
                     amount: '1,749.50',
                     percentage: '-5%',
@@ -67,7 +67,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            const Text(
+            Text(
               'Top Spending',
               style: TextStyle(
                 fontSize: 18,
@@ -76,13 +76,28 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            homeTopSpendingRow('Food 🍔', 450, 0.4, CustomColors.orange),
-            homeTopSpendingRow('Rent 🏠', 900, 0.8, CustomColors.primaryBlue),
-            homeTopSpendingRow('Entertainment 🎮', 200, 0.2, CustomColors.purple),
+            HomeTopSpendingRow(
+              label: 'Food 🍔',
+              amount: 450,
+              percent: 0.4,
+              color: CustomColors.orange,
+            ),
+            HomeTopSpendingRow(
+              label: 'Rent 🏠',
+              amount: 900,
+              percent: 0.8,
+              color: CustomColors.primaryBlue,
+            ),
+            HomeTopSpendingRow(
+              label: 'Entertainment 🎮',
+              amount: 200,
+              percent: 0.2,
+              color: CustomColors.purple,
+            ),
 
             const SizedBox(height: 32),
 
-            const Text(
+            Text(
               'AI Insights',
               style: TextStyle(
                 fontSize: 18,
@@ -95,11 +110,13 @@ class HomeScreen extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  homeAIInsightCard(
+                  HomeAiInsightsCard(
+                    text:
                     'You spent 20% more on dining this week. Consider reducing coffee purchases by 10%.',
                   ),
                   const SizedBox(width: 16),
-                  homeAIInsightCard(
+                  HomeAiInsightsCard(
+                    text:
                     'Try saving \$50 by reducing online subscriptions.',
                   ),
                 ],
@@ -113,11 +130,17 @@ class HomeScreen extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddTransactionScreen()),
+            MaterialPageRoute(
+              builder: (context) => const AddTransactionScreen(),
+            ),
           );
         },
         backgroundColor: CustomColors.primaryBlue,
-        child: const Icon(Icons.add_rounded, color: CustomColors.white, size: 32),
+        child: const Icon(
+          Icons.add_rounded,
+          color: CustomColors.white,
+          size: 32,
+        ),
       ),
     );
   }

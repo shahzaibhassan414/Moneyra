@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../Constants/Constants.dart';
 import '../../Constants/custom_colors.dart';
 import '../../Utils/custom_button.dart';
 import '../../Utils/custom_text_field.dart';
+import '../AddCategoryScreen/add_category_screen.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
@@ -14,29 +16,22 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _aiController = TextEditingController();
-  
+
   String _selectedCategory = 'Food';
   DateTime _selectedDate = DateTime.now();
 
-  final List<Map<String, dynamic>> _categories = [
-    {'name': 'Food', 'icon': Icons.restaurant_rounded, 'emoji': '🍔'},
-    {'name': 'Rent', 'icon': Icons.home_rounded, 'emoji': '🏠'},
-    {'name': 'Entertainment', 'icon': Icons.sports_esports_rounded, 'emoji': '🎮'},
-    {'name': 'Transport', 'icon': Icons.directions_car_rounded, 'emoji': '🚗'},
-    {'name': 'Shopping', 'icon': Icons.shopping_bag_rounded, 'emoji': '🛍️'},
-    {'name': 'Salary', 'icon': Icons.payments_rounded, 'emoji': '💰'},
-  ];
 
   void _handleAIInput(String text) {
     final amountRegex = RegExp(r'\$?\d+(\.\d+)?');
     final match = amountRegex.firstMatch(text);
-    
+
     if (match != null) {
       String amount = match.group(0)!.replaceAll('\$', '');
       setState(() {
         _amountController.text = amount;
-        
-        if (text.toLowerCase().contains('lunch') || text.toLowerCase().contains('food')) {
+
+        if (text.toLowerCase().contains('lunch') ||
+            text.toLowerCase().contains('food')) {
           _selectedCategory = 'Food';
         } else if (text.toLowerCase().contains('rent')) {
           _selectedCategory = 'Rent';
@@ -79,7 +74,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         backgroundColor: CustomColors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: CustomColors.primaryText),
+          icon: const Icon(
+            Icons.close_rounded,
+            color: CustomColors.primaryText,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -99,14 +97,20 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               decoration: BoxDecoration(
                 color: CustomColors.primaryBlue.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: CustomColors.primaryBlue.withValues(alpha: 0.1)),
+                border: Border.all(
+                  color: CustomColors.primaryBlue.withValues(alpha: 0.1),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.auto_awesome_rounded, color: CustomColors.gold, size: 20),
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        color: CustomColors.gold,
+                        size: 20,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'AI Quick Add',
@@ -123,18 +127,27 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     onChanged: _handleAIInput,
                     decoration: InputDecoration(
                       hintText: 'e.g., Spent \$15 on lunch',
-                      hintStyle: const TextStyle(color: CustomColors.secondaryText),
+                      hintStyle: const TextStyle(
+                        color: CustomColors.secondaryText,
+                      ),
                       border: InputBorder.none,
                       filled: true,
                       fillColor: CustomColors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: CustomColors.grey100),
+                        borderSide: const BorderSide(
+                          color: CustomColors.grey100,
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: CustomColors.primaryBlue),
+                        borderSide: const BorderSide(
+                          color: CustomColors.primaryBlue,
+                        ),
                       ),
                     ),
                   ),
@@ -177,12 +190,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 child: DropdownButton<String>(
                   value: _selectedCategory,
                   isExpanded: true,
-                  items: _categories.map((cat) {
+                  items: Constants.transactionCategories.map((cat) {
                     return DropdownMenuItem<String>(
                       value: cat['name'],
                       child: Row(
                         children: [
-                          Icon(cat['icon'], color: CustomColors.primaryBlue, size: 20),
+                          Icon(
+                            cat['icon'],
+                            color: CustomColors.primaryBlue,
+                            size: 20,
+                          ),
                           const SizedBox(width: 12),
                           Text('${cat['emoji']} ${cat['name']}'),
                         ],
@@ -197,7 +214,20 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                child: Text("Add Category"),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddCategoryScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
 
             // Date Picker
             const Align(
@@ -223,7 +253,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_rounded, color: CustomColors.primaryBlue, size: 20),
+                    const Icon(
+                      Icons.calendar_today_rounded,
+                      color: CustomColors.primaryBlue,
+                      size: 20,
+                    ),
                     const SizedBox(width: 12),
                     Text(
                       '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
@@ -253,9 +287,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: const BorderSide(color: CustomColors.grey200),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('Cancel', style: TextStyle(color: CustomColors.secondaryText)),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: CustomColors.secondaryText),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),

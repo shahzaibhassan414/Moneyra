@@ -16,8 +16,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: CustomColors.backgroundGray,
       body: SafeArea(
         child: Column(
           children: [
@@ -35,7 +35,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.account_balance_wallet, size: 100, color: CustomColors.primaryBlue),
+                      const Icon(
+                        Icons.account_balance_wallet,
+                        size: 100,
+                        color: CustomColors.primaryBlue,
+                      ),
                       const SizedBox(height: 40),
                       Text(
                         Constants.onboardingData[index]['title']!,
@@ -70,7 +74,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   height: 8,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _currentPage == index ? CustomColors.primaryBlue : Colors.grey.shade300,
+                    color: _currentPage == index
+                        ? CustomColors.primaryBlue
+                        : Colors.grey.shade300,
                   ),
                 ),
               ),
@@ -85,7 +91,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     if (_currentPage == Constants.onboardingData.length - 1) {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const AuthScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const AuthScreen(),
+                        ),
                       );
                     } else {
                       _pageController.nextPage(
@@ -103,7 +111,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   child: Text(
-                    _currentPage == Constants.onboardingData.length - 1 ? 'Get Started' : 'Next',
+                    _currentPage == Constants.onboardingData.length - 1
+                        ? 'Get Started'
+                        : 'Next',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
