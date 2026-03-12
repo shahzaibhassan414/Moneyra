@@ -19,16 +19,18 @@ class Constants {
 
 
   static final List<Map<String, dynamic>> transactionCategories = [
-    {'name': 'Food', 'icon': Icons.restaurant_rounded, 'emoji': '🍔'},
-    {'name': 'Rent', 'icon': Icons.home_rounded, 'emoji': '🏠'},
-    {
-      'name': 'Entertainment',
-      'icon': Icons.sports_esports_rounded,
-      'emoji': '🎮',
-    },
-    {'name': 'Transport', 'icon': Icons.directions_car_rounded, 'emoji': '🚗'},
-    {'name': 'Shopping', 'icon': Icons.shopping_bag_rounded, 'emoji': '🛍️'},
-    {'name': 'Salary', 'icon': Icons.payments_rounded, 'emoji': '💰'},
+    {'name': 'Groceries', 'icon': Icons.local_grocery_store_rounded, 'emoji': '🛒'},
+    {'name': 'Bills', 'icon': Icons.receipt_long_rounded, 'emoji': '🧾'},
+    {'name': 'Health', 'icon': Icons.local_hospital_rounded, 'emoji': '🏥'},
+    {'name': 'Education', 'icon': Icons.school_rounded, 'emoji': '🎓'},
+    {'name': 'Travel', 'icon': Icons.flight_takeoff_rounded, 'emoji': '✈️'},
+    {'name': 'Savings', 'icon': Icons.savings_rounded, 'emoji': '🏦'},
+    {'name': 'Investment', 'icon': Icons.trending_up_rounded, 'emoji': '📈'},
+    {'name': 'Gifts', 'icon': Icons.card_giftcard_rounded, 'emoji': '🎁'},
+    {'name': 'Subscriptions', 'icon': Icons.subscriptions_rounded, 'emoji': '📺'},
+    {'name': 'Pets', 'icon': Icons.pets_rounded, 'emoji': '🐶'},
+    {'name': 'Charity', 'icon': Icons.volunteer_activism_rounded, 'emoji': '🤝'},
+    {'name': 'Other', 'icon': Icons.category_rounded, 'emoji': '📦'},
   ];
 
 }

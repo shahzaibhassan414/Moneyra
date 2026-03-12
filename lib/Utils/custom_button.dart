@@ -4,11 +4,14 @@ import '../Constants/custom_colors.dart';
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
-  const CustomButton({super.key, required this.text, required this.onPressed});
+  final bool? isLoading;
+  const CustomButton({super.key, required this.text, required this.onPressed, this.isLoading = false});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return isLoading! ?
+    Center(child: CircularProgressIndicator(color: CustomColors.primaryBlue)) :
+      SizedBox(
       height: 56,
       child: ElevatedButton(
         onPressed: onPressed,

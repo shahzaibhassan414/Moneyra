@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../Constants/custom_colors.dart';
+import '../BottomNav/bottom_nav.dart';
 import '../OnBoardingScreen/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -10,6 +12,8 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+
   @override
   void initState() {
     super.initState();
@@ -17,12 +21,20 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> navigateToOnboarding() async {
+    final SharedPreferences prefs = await _prefs;
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-    );
+    if(prefs.getBool("isLogin") == null || prefs.getBool("isLogin") == false) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+      );
+    }else{
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const BottomNavWrapper()),
+      );
+    }
   }
 
   @override
