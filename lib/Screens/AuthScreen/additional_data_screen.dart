@@ -2,9 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:currency_picker/currency_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:moneyra/Utils/currency_formatter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../Constants/Constants.dart';
 import '../../Constants/custom_colors.dart';
+import '../../Models/category_model.dart';
+import '../../Utils/amount_format_controller.dart';
 import '../../Utils/custom_button.dart';
 import '../../Utils/custom_text_field.dart';
 import '../../Utils/feedback_utils.dart';
@@ -20,13 +23,13 @@ class AdditionalDataScreen extends StatefulWidget {
 class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
-  final TextEditingController _incomeController = TextEditingController();
+  final _incomeController = AmountFormatterController();
   bool _isLoading = false;
   String _selectedCurrency = 'USD';
   String _currencyName = 'US Dollar';
   String _currencySymbol = '\$';
-  
-  final List<String> _selectedCategoryNames = [];
+
+  final List<CategoryModel> _selectedCategories = [];
 
   Future<void> _saveAdditionalData() async {
     final SharedPreferences prefs = await _prefs;
@@ -35,17 +38,28 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-          'monthlyIncome': double.tryParse(_incomeController.text) ?? 0.0,
-          'currency': _selectedCurrency,
-          'currencySymbol': _currencySymbol,
-          'additionalCategories': _selectedCategoryNames,
-          'isSetupComplete': true,
-        });
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
+              'monthlyIncome':
+                  double.tryParse(_incomeController.text.replaceAll(',', '')) ??
+                  0.0,
+              'monthlyExpense': 0.0,
+              'currency': _selectedCurrency,
+              'currencySymbol': _currencySymbol,
+              'additionalCategories': _selectedCategories
+                  .map((cat) => cat.toJson())
+                  .toList(),
+              'isSetupComplete': true,
+            });
 
         if (mounted) {
           prefs.setBool("isLogin", true);
-          FeedbackUtils.showSuccess(context, 'Setup complete! Welcome to Moneyra.');
+          FeedbackUtils.showSuccess(
+            context,
+            'Setup complete! Welcome to Moneyra.',
+          );
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const BottomNavWrapper()),
@@ -59,12 +73,86 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+  void _showBudgetBottomSheet(CategoryModel category) {
+    final budgetController = AmountFormatterController();
     bool isDark = Theme.of(context).brightness == Brightness.dark;
 
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : CustomColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          left: 24,
+          right: 24,
+          top: 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text(category.emoji, style: const TextStyle(fontSize: 24)),
+                const SizedBox(width: 12),
+                Text(
+                  'Set Budget for ${category.name}',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark
+                        ? CustomColors.white
+                        : CustomColors.primaryText,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            CustomTextField(
+              label: 'Monthly Budget',
+              hint: '0.00',
+              controller: budgetController,
+              keyboardType: TextInputType.number,
+              prefixIcon: Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: Text(_currencySymbol),
+              ),
+            ),
+            const SizedBox(height: 32),
+            CustomButton(
+              text: 'Confirm',
+              onPressed: () {
+                final amount =
+                    double.tryParse(
+                      budgetController.text.replaceAll(',', ''),
+                    ) ??
+                    0.0;
+                setState(() {
+                  _selectedCategories.add(
+                    CategoryModel(
+                      name: category.name,
+                      emoji: category.emoji,
+                      budget: amount,
+                    ),
+                  );
+                });
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : CustomColors.backgroundGray,
+      backgroundColor: CustomColors.backgroundGray,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -78,31 +166,32 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? CustomColors.white : CustomColors.primaryBlue,
+                  color: CustomColors.primaryBlue,
                 ),
               ),
               const SizedBox(height: 12),
               const Text(
                 'Help us tailor Moneyra to your needs',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: CustomColors.secondaryText),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: CustomColors.secondaryText,
+                ),
               ),
               const SizedBox(height: 48),
-              
               CustomTextField(
                 label: 'Monthly Income',
-                hint: 'e.g., 5000',
+                hint: 'e.g., 5,000',
                 controller: _incomeController,
                 icon: Icons.account_balance_wallet_rounded,
                 keyboardType: TextInputType.number,
-                validator: (value){
-                  if(value == null || value.isEmpty){
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
                     return 'Please enter your monthly income';
                   }
                   return null;
                 },
               ),
-
               const SizedBox(height: 24),
               const Text(
                 'Default Currency',
@@ -128,20 +217,24 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                       });
                     },
                     theme: CurrencyPickerThemeData(
-                      backgroundColor: isDark ? const Color(0xFF1E1E1E) : CustomColors.white,
-                      titleTextStyle: TextStyle(color: isDark ? CustomColors.white : CustomColors.primaryText),
-                      subtitleTextStyle: const TextStyle(color: CustomColors.secondaryText),
-                      // currencySymbolTextStyle: TextStyle(color: isDark ? CustomColors.white : CustomColors.primaryText),
-                      bottomSheetHeight: MediaQuery.of(context).size.height * 0.7,
+                      backgroundColor: CustomColors.white,
+                      titleTextStyle: TextStyle(
+                        color: CustomColors.primaryText,
+                      ),
+                      subtitleTextStyle: const TextStyle(
+                        color: CustomColors.secondaryText,
+                      ),
+                      bottomSheetHeight:
+                          MediaQuery.of(context).size.height * 0.7,
                     ),
                   );
                 },
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : CustomColors.white,
+                    color: CustomColors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDark ? Colors.transparent : CustomColors.grey100),
+                    border: Border.all(color: CustomColors.grey100),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -150,15 +243,17 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                         '$_currencySymbol - $_currencyName ($_selectedCurrency)',
                         style: TextStyle(
                           fontSize: 16,
-                          color: isDark ? CustomColors.white : CustomColors.primaryText,
+                          color: CustomColors.primaryText,
                         ),
                       ),
-                      const Icon(Icons.keyboard_arrow_down_rounded, color: CustomColors.secondaryText),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: CustomColors.secondaryText,
+                      ),
                     ],
                   ),
                 ),
               ),
-              
               const SizedBox(height: 32),
               const Text(
                 'Choose Additional Categories',
@@ -169,7 +264,6 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -182,67 +276,90 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                 itemCount: Constants.transactionCategories.length,
                 itemBuilder: (context, index) {
                   final cat = Constants.transactionCategories[index];
-                  final String catName = cat['name'];
-                  bool isSelected = _selectedCategoryNames.contains(catName);
-                  
+                  bool isSelected = _selectedCategories.any(
+                    (c) => c.name == cat.name,
+                  );
+                  CategoryModel? selectedInstance = isSelected
+                      ? _selectedCategories.firstWhere(
+                          (c) => c.name == cat.name,
+                        )
+                      : null;
+
                   return InkWell(
                     onTap: () {
-                      setState(() {
-                        if (isSelected) {
-                          _selectedCategoryNames.remove(catName);
-                        } else {
-                          _selectedCategoryNames.add(catName);
-                        }
-                      });
+                      if (isSelected) {
+                        setState(() {
+                          _selectedCategories.removeWhere(
+                            (c) => c.name == cat.name,
+                          );
+                        });
+                      } else {
+                        _showBudgetBottomSheet(cat);
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isSelected ? CustomColors.primaryBlue : (isDark ? CustomColors.darkBlack : CustomColors.white),
+                        color: isSelected
+                            ? CustomColors.primaryBlue.withValues(alpha: 0.08)
+                            : (CustomColors.white),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isSelected ? Colors.transparent : (isDark ? Colors.transparent : CustomColors.grey100),
+                          color: isSelected
+                              ? CustomColors.primaryBlue
+                              : CustomColors.grey100,
                         ),
-                        boxShadow: isSelected ? [
-                          BoxShadow(
-                            color: CustomColors.primaryBlue.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          )
-                        ] : null,
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: CustomColors.black.withValues(
+                                    alpha: 0.03,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : null,
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          Text(cat.emoji, style: const TextStyle(fontSize: 24)),
+                          const SizedBox(height: 4),
                           Text(
-                            cat['emoji'],
-                            style: const TextStyle(fontSize: 24),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            catName,
+                            cat.name,
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: isSelected ? CustomColors.white : (isDark ? CustomColors.white : CustomColors.primaryText),
+                              color: CustomColors.primaryText,
                             ),
                           ),
+                          if (isSelected) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              '$_currencySymbol${CurrencyFormatter.format(selectedInstance?.budget)}',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: CustomColors.secondaryText,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
                   );
                 },
               ),
-              
               const SizedBox(height: 48),
-             CustomButton(
-                      text: 'Complete Setup',
-                      onPressed: _saveAdditionalData,
-               isLoading: _isLoading,
-                    ),
+              CustomButton(
+                text: 'Complete Setup',
+                onPressed: _saveAdditionalData,
+                isLoading: _isLoading,
+              ),
             ],
           ),
         ),

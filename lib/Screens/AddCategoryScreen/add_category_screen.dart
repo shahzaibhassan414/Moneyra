@@ -1,5 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:moneyra/Constants/Constants.dart';
+import 'package:moneyra/Models/category_model.dart';
+import 'package:moneyra/Utils/amount_format_controller.dart';
+import 'package:moneyra/Utils/feedback_utils.dart';
 import '../../Constants/custom_colors.dart';
+import '../../Controllers/user_controller.dart';
 import '../../Utils/custom_button.dart';
 import '../../Utils/custom_text_field.dart';
 
@@ -11,42 +18,53 @@ class AddCategoryScreen extends StatefulWidget {
 }
 
 class _AddCategoryScreenState extends State<AddCategoryScreen> {
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final UserController userController = Get.find<UserController>();
+
   final TextEditingController _nameController = TextEditingController();
-  IconData _selectedIcon = Icons.category_rounded;
-  Color _selectedColor = CustomColors.primaryBlue;
+  final _budgetController = AmountFormatterController();
+  String _selectedIcon = Constants.availableCategoryIcons.first;
+  bool _isLoading = false;
 
-  final List<IconData> _availableIcons = [
-    Icons.restaurant_rounded,
-    Icons.shopping_cart_rounded,
-    Icons.home_rounded,
-    Icons.directions_car_rounded,
-    Icons.movie_rounded,
-    Icons.fitness_center_rounded,
-    Icons.medical_services_rounded,
-    Icons.school_rounded,
-    Icons.flight_rounded,
-    Icons.pets_rounded,
-    Icons.sports_esports_rounded,
-    Icons.local_gas_station_rounded,
-    Icons.work_rounded,
-    Icons.card_giftcard_rounded,
-    Icons.account_balance_rounded,
-  ];
+  Future<void> _saveCategory() async {
+    if (!formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
 
-  final List<Color> _availableColors = [
-    CustomColors.primaryBlue,
-    CustomColors.primaryGreen,
-    CustomColors.warningRed,
-    CustomColors.softTeal,
-    CustomColors.lightBlue,
-    CustomColors.gold,
-    CustomColors.orange,
-    CustomColors.purple,
-    CustomColors.amber,
-    Colors.pink,
-    Colors.brown,
-    Colors.indigo,
-  ];
+    try {
+      final user = userController.user.value;
+      if (user == null) return;
+
+      final budgetText = _budgetController.text.replaceAll(',', '');
+      final double budget = double.tryParse(budgetText) ?? 0.0;
+
+      final newCategory = CategoryModel(
+        name: _nameController.text.trim(),
+        emoji: _selectedIcon,
+        budget: budget,
+      );
+
+      List<CategoryModel> updatedCategories = List.from(user.additionalCategories);
+      updatedCategories.add(newCategory);
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'additionalCategories': updatedCategories.map((cat) => cat.toJson()).toList(),
+      });
+
+      await userController.fetchUserData();
+
+      if (mounted) {
+        FeedbackUtils.showSuccess(context, 'Category added successfully!');
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) FeedbackUtils.showInfo(context, 'Error: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,8 +76,8 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, 
-                color: isDark ? CustomColors.white : CustomColors.primaryText),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: isDark ? CustomColors.white : CustomColors.primaryText),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -72,130 +90,112 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Preview Circle
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: _selectedColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  _selectedIcon,
-                  size: 64,
-                  color: _selectedColor,
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Name Field
-            CustomTextField(
-              label: 'Category Name',
-              hint: 'e.g., Grocery, Gym',
-              controller: _nameController,
-              icon: Icons.edit_rounded,
-            ),
-            const SizedBox(height: 32),
-
-            // Icon Selection
-            Text(
-              'Select Icon',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: isDark ? CustomColors.white : CustomColors.primaryText,
-              ),
-            ),
-            const SizedBox(height: 16),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-              ),
-              itemCount: _availableIcons.length,
-              itemBuilder: (context, index) {
-                bool isSelected = _selectedIcon == _availableIcons[index];
-                return InkWell(
-                  onTap: () => setState(() => _selectedIcon = _availableIcons[index]),
-                  child: Container(
+        child: Form(
+          key: formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: isSelected 
-                          ? _selectedColor.withOpacity(0.1) 
-                          : (isDark ? const Color(0xFF1E1E1E) : CustomColors.white),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected ? _selectedColor : Colors.transparent,
-                        width: 2,
-                      ),
+                      color: CustomColors.primaryBlue.withOpacity(0.055),
+                      shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      _availableIcons[index],
-                      color: isSelected ? _selectedColor : CustomColors.secondaryText,
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 32),
-
-            // Color Selection
-            Text(
-              'Select Color',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: isDark ? CustomColors.white : CustomColors.primaryText,
+                    child: Text(
+                      _selectedIcon,
+                      style: const TextStyle(fontSize: 32),
+                    )),
               ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 50,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _availableColors.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 12),
+              const SizedBox(height: 32),
+
+              CustomTextField(
+                label: 'Category Name',
+                hint: 'e.g., Grocery, Gym',
+                controller: _nameController,
+                icon: Icons.edit_rounded,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a category name';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+
+              CustomTextField(
+                label: 'Monthly Budget (Optional)',
+                hint: '0',
+                controller: _budgetController,
+                keyboardType: TextInputType.number,
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Text(userController.user.value?.currencySymbol ?? '\$'),
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              Text(
+                'Select Icon',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? CustomColors.white : CustomColors.primaryText,
+                ),
+              ),
+              const SizedBox(height: 16),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 5,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                ),
+                itemCount: Constants.availableCategoryIcons.length,
                 itemBuilder: (context, index) {
-                  bool isSelected = _selectedColor == _availableColors[index];
+                  bool isSelected =
+                      _selectedIcon == Constants.availableCategoryIcons[index];
                   return InkWell(
-                    onTap: () => setState(() => _selectedColor = _availableColors[index]),
+                    onTap: () => setState(() =>
+                        _selectedIcon = Constants.availableCategoryIcons[index]),
                     child: Container(
-                      width: 50,
                       decoration: BoxDecoration(
-                        color: _availableColors[index],
-                        shape: BoxShape.circle,
+                        color: isSelected
+                            ? CustomColors.primaryGreen.withOpacity(0.1)
+                            : (isDark
+                                ? const Color(0xFF1E1E1E)
+                                : CustomColors.white),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? (isDark ? CustomColors.white : CustomColors.black) : Colors.transparent,
-                          width: 3,
+                          color: isSelected
+                              ? CustomColors.primaryGreen
+                              : Colors.transparent,
+                          width: 2,
                         ),
                       ),
-                      child: isSelected 
-                          ? Icon(Icons.check_rounded, color: CustomColors.white, size: 24) 
-                          : null,
+                      child: Center(
+                        child: Text(
+                          Constants.availableCategoryIcons[index],
+                          style: const TextStyle(fontSize: 25),
+                        ),
+                      ),
                     ),
                   );
                 },
               ),
-            ),
-            const SizedBox(height: 48),
 
-            // Save Button
-            CustomButton(
-              text: 'Save Category',
-              onPressed: () {
-                if (_nameController.text.isNotEmpty) {
-                  // Logic to save category goes here
-                  Navigator.pop(context);
-                }
-              },
-            ),
-          ],
+              const SizedBox(height: 48),
+
+              Center(
+                child: CustomButton(
+                  text: 'Save Category',
+                  isLoading: _isLoading,
+                  onPressed: _saveCategory,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

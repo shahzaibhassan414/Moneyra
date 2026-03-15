@@ -15,9 +15,10 @@ class BottomNavWrapper extends StatefulWidget {
 class _BottomNavWrapperState extends State<BottomNavWrapper> {
   int _selectedIndex = 0;
 
+
   final List<Widget> _screens = [
     const HomeScreen(),
-    const BudgetScreen(),
+     BudgetScreen(),
     const ReportsScreen(),
     const ProfileScreen(),
   ];

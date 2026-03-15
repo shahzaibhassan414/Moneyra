@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../Models/category_model.dart';
 
 class Constants {
-
   static final List<Map<String, String>> onboardingData = [
     {
       'title': 'Track your income & expenses',
@@ -17,20 +17,31 @@ class Constants {
     },
   ];
 
-
-  static final List<Map<String, dynamic>> transactionCategories = [
-    {'name': 'Groceries', 'icon': Icons.local_grocery_store_rounded, 'emoji': '🛒'},
-    {'name': 'Bills', 'icon': Icons.receipt_long_rounded, 'emoji': '🧾'},
-    {'name': 'Health', 'icon': Icons.local_hospital_rounded, 'emoji': '🏥'},
-    {'name': 'Education', 'icon': Icons.school_rounded, 'emoji': '🎓'},
-    {'name': 'Travel', 'icon': Icons.flight_takeoff_rounded, 'emoji': '✈️'},
-    {'name': 'Savings', 'icon': Icons.savings_rounded, 'emoji': '🏦'},
-    {'name': 'Investment', 'icon': Icons.trending_up_rounded, 'emoji': '📈'},
-    {'name': 'Gifts', 'icon': Icons.card_giftcard_rounded, 'emoji': '🎁'},
-    {'name': 'Subscriptions', 'icon': Icons.subscriptions_rounded, 'emoji': '📺'},
-    {'name': 'Pets', 'icon': Icons.pets_rounded, 'emoji': '🐶'},
-    {'name': 'Charity', 'icon': Icons.volunteer_activism_rounded, 'emoji': '🤝'},
-    {'name': 'Other', 'icon': Icons.category_rounded, 'emoji': '📦'},
+  static final List<CategoryModel> transactionCategories = [
+    CategoryModel(name: 'Groceries', emoji: '🛒'),
+    CategoryModel(name: 'Bills', emoji: '🧾'),
+    CategoryModel(name: 'Health', emoji: '🏥'),
+    CategoryModel(name: 'Education', emoji: '🎓'),
+    CategoryModel(name: 'Travel', emoji: '✈️'),
+    CategoryModel(name: 'Savings', emoji: '🏦'),
+    CategoryModel(name: 'Investments', emoji: '📈'),
+    CategoryModel(name: 'Gifts', emoji: '🎁'),
+    CategoryModel(name: 'Subscriptions', emoji: '📺'),
+    CategoryModel(name: 'Pets', emoji: '🐶'),
+    CategoryModel(name: 'Charity', emoji: '🤝'),
+    CategoryModel(name: 'Other', emoji: '📦'),
   ];
 
+  static final List<CategoryModel> incomeCategories = [
+    CategoryModel(name: 'Salary', emoji: '💰'),
+    CategoryModel(name: 'Business', emoji: '🏢'),
+    CategoryModel(name: 'Freelance', emoji: '💻'),
+    CategoryModel(name: 'Gift', emoji: '🎁'),
+    CategoryModel(name: 'Investment Return', emoji: '📈'),
+    CategoryModel(name: 'Other', emoji: '➕'),
+  ];
+
+  static final List<String> availableCategoryIcons = [
+    "🍔", "🚗", "⛽", "🛍️", "👕", "🎮", "🎬", "☕", "💊", "📱", "💡", "🔧", "📺", "🤝", "🅿️", "🧮",
+  ];
 }

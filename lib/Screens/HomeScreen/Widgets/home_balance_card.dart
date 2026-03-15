@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:moneyra/Utils/currency_formatter.dart';
 import '../../../Constants/custom_colors.dart';
+import '../../../Controllers/user_controller.dart';
 
 class HomeBalanceCard extends StatelessWidget {
-  final double balance;
+  final String balance;
   const HomeBalanceCard({super.key, required this.balance});
 
   @override
   Widget build(BuildContext context) {
-    bool isPositive = balance >= 0;
+    final UserController userController = Get.find<UserController>();
+    double numericBalance = double.tryParse(balance.replaceAll(',', '')) ?? 0.0;
+    bool isPositive = numericBalance >= 0;
+    
     Color cardColor = isPositive ? CustomColors.primaryGreen : CustomColors.warningRed;
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -31,14 +38,18 @@ class HomeBalanceCard extends StatelessWidget {
             style: TextStyle(color: CustomColors.white70, fontSize: 14),
           ),
           const SizedBox(height: 8),
-          Text(
-            '\$${balance.toStringAsFixed(2)}',
+        Obx(() {
+          final user = userController.user.value;
+          return Text(
+            "${user!.currencySymbol}${CurrencyFormatter.format(balance)}",
             style: const TextStyle(
               color: CustomColors.white,
               fontSize: 36,
               fontWeight: FontWeight.bold,
             ),
-          ),
+          );
+        }),
+
           const SizedBox(height: 20),
           SizedBox(
             height: 40,

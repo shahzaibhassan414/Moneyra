@@ -1,5 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../Constants/custom_colors.dart';
+import '../../../Controllers/user_controller.dart';
+import '../../../Utils/currency_formatter.dart';
 
 class HomeOverviewCard extends StatelessWidget {
   final String title;
@@ -20,6 +25,7 @@ class HomeOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final UserController userController = Get.find<UserController>();
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -51,14 +57,18 @@ class HomeOverviewCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            '\$$amount',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
+    Obx(() {
+      final user = userController.user.value;
+      return  Text(
+        "${user!.currencySymbol}${CurrencyFormatter.format(amount)}",
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      );
+    }),
+
           const SizedBox(height: 4),
           Text(
             percentage,

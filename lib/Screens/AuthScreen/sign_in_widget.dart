@@ -64,6 +64,7 @@ class _SignInWidgetState extends State<SignInWidget> {
         }
       }
     } on FirebaseAuthException catch (e) {
+      print(e);
       String message = 'An error occurred';
       if (e.code == 'user-not-found') {
         message = 'No user found for that email.';

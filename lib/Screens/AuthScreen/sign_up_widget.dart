@@ -48,6 +48,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
           'fullName': _nameController.text.trim(),
           'email': _emailController.text.trim(),
           'createdAt': FieldValue.serverTimestamp(),
+          'isActive' : true,
         });
 
         if (mounted) {

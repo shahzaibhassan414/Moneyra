@@ -5,20 +5,22 @@ class CustomTextField extends StatelessWidget {
   final String label;
   final String hint;
   final TextEditingController controller;
-  final IconData icon;
+  final IconData? icon;
+  final Widget? prefixIcon;
   final bool isPassword;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
-
 
   const CustomTextField({
     super.key,
     required this.label,
     required this.hint,
     required this.controller,
-    required this.icon,
+     this.icon,
     this.isPassword = false,
-    this.keyboardType = TextInputType.text, this.validator,
+    this.keyboardType = TextInputType.text,
+    this.validator,
+    this.prefixIcon,
   });
 
   @override
@@ -42,7 +44,15 @@ class CustomTextField extends StatelessWidget {
           validator: validator,
           decoration: InputDecoration(
             hintText: hint,
-            prefixIcon: Icon(icon, color: CustomColors.secondaryText, size: 20),
+            prefixIcon: prefixIcon == null
+                ? Icon(icon, color: CustomColors.secondaryText, size: 20)
+                : Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 15,
+                      horizontal: 10,
+                    ),
+                    child: prefixIcon,
+                  ),
             filled: true,
             fillColor: CustomColors.white,
             border: OutlineInputBorder(

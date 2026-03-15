@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../../../Constants/custom_colors.dart';
+import '../../../Utils/currency_formatter.dart';
 
 Widget budgetCategoryBreakDownItem({
   required String category,
   required double spent,
   required double budget,
-  required Color color,
+  required String currency,
 }) {
   double percent = (spent / budget).clamp(0.0, 1.0);
   bool isOver = spent > budget;
 
   return Container(
-    margin: const EdgeInsets.only(bottom: 20),
+    margin: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: CustomColors.white,
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: isOver ? CustomColors.warningRed.withValues(alpha: 0.3) : CustomColors.grey100,
+        color: isOver
+            ? CustomColors.warningRed.withValues(alpha: 0.3)
+            : CustomColors.grey100,
       ),
     ),
     child: Column(
@@ -34,14 +37,16 @@ Widget budgetCategoryBreakDownItem({
               text: TextSpan(
                 children: [
                   TextSpan(
-                    text: '\$${spent.toStringAsFixed(0)}',
+                    text: "$currency${CurrencyFormatter.format(spent)}",
                     style: TextStyle(
-                      color: isOver ? CustomColors.warningRed : CustomColors.primaryText,
+                      color: isOver
+                          ? CustomColors.warningRed
+                          : CustomColors.primaryText,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   TextSpan(
-                    text: ' / \$${budget.toStringAsFixed(0)}',
+                    text: ' / ${budget.toStringAsFixed(0)}',
                     style: const TextStyle(color: CustomColors.secondaryText),
                   ),
                 ],
@@ -56,7 +61,7 @@ Widget budgetCategoryBreakDownItem({
             value: percent,
             backgroundColor: CustomColors.grey200,
             valueColor: AlwaysStoppedAnimation<Color>(
-              isOver ? CustomColors.warningRed : color,
+              isOver ? CustomColors.warningRed : CustomColors.primaryBlue,
             ),
             minHeight: 8,
           ),
@@ -66,10 +71,14 @@ Widget budgetCategoryBreakDownItem({
             padding: const EdgeInsets.only(top: 8.0),
             child: Row(
               children: [
-                const Icon(Icons.warning_amber_rounded, color: CustomColors.warningRed, size: 14),
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: CustomColors.warningRed,
+                  size: 14,
+                ),
                 const SizedBox(width: 4),
                 Text(
-                  'Overspent by \$${(spent - budget).toStringAsFixed(0)}',
+                  'Overspent by $currency ${(spent - budget).toStringAsFixed(0)}',
                   style: const TextStyle(
                     color: CustomColors.warningRed,
                     fontSize: 12,

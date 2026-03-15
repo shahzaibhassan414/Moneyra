@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:get/get.dart';
+import 'Controllers/user_controller.dart';
 import 'firebase_options.dart';
 import 'Theme/dark_theme.dart';
 import 'Theme/lightTheme.dart';
 import 'screens/SplashScreen/splash_screen.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Set default status bar style
+  Get.put(UserController());
+
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark, // For Android
-    statusBarBrightness: Brightness.light, // For iOS
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
   ));
   
   runApp(const MoneyraApp());
@@ -29,7 +32,7 @@ class MoneyraApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Moneyra',
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
