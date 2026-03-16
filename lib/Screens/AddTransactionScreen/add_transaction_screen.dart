@@ -13,7 +13,8 @@ import '../../Utils/custom_text_field.dart';
 import '../AddCategoryScreen/add_category_screen.dart';
 
 class AddTransactionScreen extends StatefulWidget {
-  const AddTransactionScreen({super.key});
+  final Map<String, dynamic>? transactionToEdit;
+  const AddTransactionScreen({super.key, this.transactionToEdit});
 
   @override
   State<AddTransactionScreen> createState() => _AddTransactionScreenState();
@@ -33,15 +34,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeSelectedCategory();
+    _initializeData();
   }
 
-  void _initializeSelectedCategory() {
-    final user = userController.user.value;
-    if (user != null && user.additionalCategories.isNotEmpty) {
-      _selectedCategory = user.additionalCategories.first.name;
+  void _initializeData() {
+    if (widget.transactionToEdit != null) {
+      // Edit Mode
+      final tx = widget.transactionToEdit!;
+      _amountController.text = tx['amount'].toString();
+      _noteController.text = tx['note'] ?? '';
+      _selectedCategory = tx['category'];
+      _selectedDate = (tx['date'] as dynamic)?.toDate() ?? DateTime.now();
     } else {
-      _selectedCategory = Constants.transactionCategories.first.name;
+      // Add Mode
+      final user = userController.user.value;
+      if (user != null && user.additionalCategories.isNotEmpty) {
+        _selectedCategory = user.additionalCategories.first.name;
+      } else {
+        _selectedCategory = Constants.transactionCategories.first.name;
+      }
     }
   }
 
@@ -52,41 +63,63 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       return;
     }
 
+    final double newAmount = double.parse(amountText);
     setState(() => _isLoading = true);
 
     try {
       final user = userController.user.value;
       if (user != null) {
-        await FirebaseFirestore.instance.collection('transactions').add({
-          'userId': user.uid,
-          'amount': double.parse(amountText),
-          'category': _selectedCategory,
-          'note': _noteController.text.trim(),
-          'type': 'expense', // Explicitly set type as expense
-          'date': Timestamp.fromDate(_selectedDate),
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        if (widget.transactionToEdit != null) {
+          // UPDATE MODE
+          final String txId = widget.transactionToEdit!['id'];
+          final double oldAmount = double.parse(widget.transactionToEdit!['amount'].toString());
+          final String oldType = widget.transactionToEdit!['type'] ?? 'expense';
 
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({
-              'monthlyExpense': FieldValue.increment(double.parse(amountText)),
+          // 1. Update the transaction
+          await FirebaseFirestore.instance.collection('transactions').doc(txId).update({
+            'amount': newAmount,
+            'category': _selectedCategory,
+            'note': _noteController.text.trim(),
+            'date': Timestamp.fromDate(_selectedDate),
+          });
+
+          // 2. Adjust User Balance (Subtract old, add new)
+          final double diff = newAmount - oldAmount;
+          if (oldType == 'income') {
+            await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+              'monthlyIncome': FieldValue.increment(diff),
             });
+          } else {
+            await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+              'monthlyExpense': FieldValue.increment(diff),
+            });
+          }
+        } else {
+          // ADD MODE
+          await FirebaseFirestore.instance.collection('transactions').add({
+            'userId': user.uid,
+            'amount': newAmount,
+            'category': _selectedCategory,
+            'note': _noteController.text.trim(),
+            'type': 'expense',
+            'date': Timestamp.fromDate(_selectedDate),
+            'createdAt': FieldValue.serverTimestamp(),
+          });
 
-        // Refresh user data AND top expenses
-        await userController.fetchUserData();
-        await userController.fetchTopExpenses();
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+            'monthlyExpense': FieldValue.increment(newAmount),
+          });
+        }
+
+        await userController.refreshAllData();
 
         if (mounted) {
-          FeedbackUtils.showSuccess(context, 'Transaction saved successfully!');
+          FeedbackUtils.showSuccess(context, 'Transaction saved!');
           Navigator.pop(context);
         }
       }
     } catch (e) {
-      if (mounted) {
-        FeedbackUtils.showInfo(context, 'Failed to save: ${e.toString()}');
-      }
+      if (mounted) FeedbackUtils.showInfo(context, 'Error: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -142,6 +175,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isEdit = widget.transactionToEdit != null;
+
     return Scaffold(
       backgroundColor: CustomColors.backgroundGray,
       appBar: AppBar(
@@ -151,17 +186,19 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           icon: const Icon(Icons.close_rounded, color: CustomColors.primaryText),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Add Transaction',
-          style: TextStyle(color: CustomColors.primaryText, fontWeight: FontWeight.bold),
+        title: Text(
+          isEdit ? 'Edit Transaction' : 'Add Transaction',
+          style: const TextStyle(color: CustomColors.primaryText, fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            _buildAiSection(),
-            const SizedBox(height: 32),
+            if (!isEdit) ...[
+              _buildAiSection(),
+              const SizedBox(height: 32),
+            ],
 
             CustomTextField(
               label: 'Amount',
@@ -227,23 +264,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               );
             }),
 
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                child: const Text("Add Category"),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AddCategoryScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-
+            const SizedBox(height: 24),
             _buildDatePicker(),
             const SizedBox(height: 24),
+            
             CustomTextField(
               label: 'Note (Optional)',
               hint: 'What was this for?',
@@ -268,7 +292,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: CustomButton(
-                    text: 'Save',
+                    text: isEdit ? 'Update' : 'Save',
                     isLoading: _isLoading,
                     onPressed: _saveTransaction,
                   ),

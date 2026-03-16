@@ -22,16 +22,25 @@ class BudgetScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator(color: CustomColors.primaryBlue));
         }
 
-        // 1. Group transactions by category name
+        // 1. Group ALL transactions (not just top 5) by category name
         Map<String, double> aggregatedExpenses = {};
-        for (var tx in userController.topExpenses) {
-          final String categoryName = tx['category'] ?? 'Other';
-          final double amount = double.tryParse(tx['amount'].toString()) ?? 0.0;
+        double calculatedTotalSpent = 0.0;
+
+        for (var tx in userController.allTransactions) {
+          final String type = tx['type'] ?? 'expense';
           
-          if (aggregatedExpenses.containsKey(categoryName)) {
-            aggregatedExpenses[categoryName] = aggregatedExpenses[categoryName]! + amount;
-          } else {
-            aggregatedExpenses[categoryName] = amount;
+          // Only count expenses for the budget breakdown
+          if (type == 'expense') {
+            final String categoryName = tx['category'] ?? 'Other';
+            final double amount = double.tryParse(tx['amount'].toString()) ?? 0.0;
+            
+            calculatedTotalSpent += amount;
+
+            if (aggregatedExpenses.containsKey(categoryName)) {
+              aggregatedExpenses[categoryName] = aggregatedExpenses[categoryName]! + amount;
+            } else {
+              aggregatedExpenses[categoryName] = amount;
+            }
           }
         }
 
@@ -45,14 +54,15 @@ class BudgetScreen extends StatelessWidget {
           };
         }).toList();
 
-        // 3. Sort by spent amount (Descending - Highest first)
+        // 3. Sort by spent amount (Descending)
         breakdownItems.sort((a, b) => (b['spent'] as double).compareTo(a['spent'] as double));
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             buildOverallBudgetCard(
-              spent: user.monthlyExpense,
+              // Using calculatedTotalSpent from all transactions for accuracy
+              spent: calculatedTotalSpent, 
               total: user.monthlyIncome,
               currency: user.currencySymbol,
             ),

@@ -10,19 +10,17 @@ class UserController extends GetxController {
   var user = Rxn<UserModel>();
   var isLoading = false.obs;
   
-  // Observable list for top expenses
   var topExpenses = <Map<String, dynamic>>[].obs;
+  var allTransactions = <Map<String, dynamic>>[].obs;
 
   @override
   void onInit() {
     super.onInit();
     
-    // 1. Initial check if user is already logged in
     if (_auth.currentUser != null) {
       refreshAllData();
     }
 
-    // 2. Listen to Auth changes for login/logout
     _auth.authStateChanges().listen((firebaseUser) {
       if (firebaseUser != null) {
         refreshAllData();
@@ -33,9 +31,9 @@ class UserController extends GetxController {
   }
 
   Future<void> refreshAllData() async {
-    print('Refreshing all data for: ${_auth.currentUser?.email}');
     await fetchUserData();
     await fetchTopExpenses();
+    await fetchAllTransactions();
   }
 
   Future<void> fetchUserData() async {
@@ -46,9 +44,6 @@ class UserController extends GetxController {
         DocumentSnapshot doc = await _firestore.collection('users').doc(firebaseUser.uid).get();
         if (doc.exists) {
           user.value = UserModel.fromDocument(doc);
-          print('User data fetched: ${user.value?.fullName}');
-        } else {
-          print('User document does not exist in Firestore');
         }
       }
     } catch (e) {
@@ -62,9 +57,6 @@ class UserController extends GetxController {
     try {
       final firebaseUser = _auth.currentUser;
       if (firebaseUser != null) {
-        print('Fetching top expenses for UID: ${firebaseUser.uid}');
-        
-        // Try the specific query first
         QuerySnapshot query = await _firestore
             .collection('transactions')
             .where('userId', isEqualTo: firebaseUser.uid)
@@ -73,11 +65,7 @@ class UserController extends GetxController {
             .limit(5)
             .get();
 
-        print('Found ${query.docs.length} expenses');
-        
-        // Fallback: If empty, maybe the 'type' field is missing in older transactions
         if (query.docs.isEmpty) {
-          print('No specific "expense" types found, trying general query...');
           query = await _firestore
               .collection('transactions')
               .where('userId', isEqualTo: firebaseUser.uid)
@@ -85,42 +73,78 @@ class UserController extends GetxController {
               .limit(5)
               .get();
           
-          // Filter out income locally if type field exists but isn't 'expense'
           topExpenses.value = query.docs
-              .map((doc) => doc.data() as Map<String, dynamic>)
+              .map((doc) {
+                var data = doc.data() as Map<String, dynamic>;
+                data['id'] = doc.id; // Include doc ID
+                return data;
+              })
               .where((data) => data['type'] != 'income')
               .toList();
         } else {
-          topExpenses.value = query.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+          topExpenses.value = query.docs.map((doc) {
+            var data = doc.data() as Map<String, dynamic>;
+            data['id'] = doc.id;
+            return data;
+          }).toList();
         }
       }
     } catch (e) {
       print('Error fetching top expenses: $e');
-      
-      // If there's an index error, try an even simpler query as a safe fallback
-      try {
-        final firebaseUser = _auth.currentUser;
-        if (firebaseUser != null) {
-           QuerySnapshot simpleQuery = await _firestore
-              .collection('transactions')
-              .where('userId', isEqualTo: firebaseUser.uid)
-              .limit(10)
-              .get();
-           
-           print('Simplified fallback found ${simpleQuery.docs.length} docs');
-           topExpenses.value = simpleQuery.docs
-              .map((doc) => doc.data() as Map<String, dynamic>)
-              .where((data) => data['type'] != 'income')
-              .toList();
-        }
-      } catch (e2) {
-        print('Ultimate fallback failed: $e2');
+    }
+  }
+
+  Future<void> fetchAllTransactions() async {
+    try {
+      final firebaseUser = _auth.currentUser;
+      if (firebaseUser != null) {
+        QuerySnapshot query = await _firestore
+            .collection('transactions')
+            .where('userId', isEqualTo: firebaseUser.uid)
+            .orderBy('date', descending: true)
+            .get();
+
+        allTransactions.value = query.docs.map((doc) {
+          var data = doc.data() as Map<String, dynamic>;
+          data['id'] = doc.id;
+          return data;
+        }).toList();
       }
+    } catch (e) {
+      print('Error fetching all transactions: $e');
+    }
+  }
+
+  Future<void> deleteTransaction(String transactionId, double amount, String type) async {
+    try {
+      final firebaseUser = _auth.currentUser;
+      if (firebaseUser != null) {
+        // 1. Delete the transaction document
+        await _firestore.collection('transactions').doc(transactionId).delete();
+
+        // 2. Adjust the user's totals
+        if (type == 'income') {
+          await _firestore.collection('users').doc(firebaseUser.uid).update({
+            'monthlyIncome': FieldValue.increment(-amount),
+          });
+        } else {
+          await _firestore.collection('users').doc(firebaseUser.uid).update({
+            'monthlyExpense': FieldValue.increment(-amount),
+          });
+        }
+
+        // 3. Refresh data
+        await refreshAllData();
+      }
+    } catch (e) {
+      print('Error deleting transaction: $e');
+      rethrow;
     }
   }
 
   void clearUser() {
     user.value = null;
     topExpenses.clear();
+    allTransactions.clear();
   }
 }
