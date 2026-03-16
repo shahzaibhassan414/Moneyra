@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:moneyra/Utils/AppBars/app_bar_with_center_text.dart';
 import '../../Constants/custom_colors.dart';
 import '../../Controllers/user_controller.dart';
+import '../../Utils/empty_state_widget.dart';
 import 'Widgets/budget_overall_budget_card.dart';
 import 'Widgets/budget_category_breakdown_card.dart';
 
@@ -12,14 +13,16 @@ class BudgetScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final UserController userController = Get.find<UserController>();
-    
+
     return Scaffold(
       backgroundColor: CustomColors.backgroundGray,
       appBar: const AppBarWithCenterText(text: 'Monthly Budget'),
       body: Obx(() {
         final user = userController.user.value;
         if (user == null) {
-          return const Center(child: CircularProgressIndicator(color: CustomColors.primaryBlue));
+          return const Center(
+            child: CircularProgressIndicator(color: CustomColors.primaryBlue),
+          );
         }
 
         // 1. Group ALL transactions (not just top 5) by category name
@@ -28,16 +31,18 @@ class BudgetScreen extends StatelessWidget {
 
         for (var tx in userController.allTransactions) {
           final String type = tx['type'] ?? 'expense';
-          
+
           // Only count expenses for the budget breakdown
           if (type == 'expense') {
             final String categoryName = tx['category'] ?? 'Other';
-            final double amount = double.tryParse(tx['amount'].toString()) ?? 0.0;
-            
+            final double amount =
+                double.tryParse(tx['amount'].toString()) ?? 0.0;
+
             calculatedTotalSpent += amount;
 
             if (aggregatedExpenses.containsKey(categoryName)) {
-              aggregatedExpenses[categoryName] = aggregatedExpenses[categoryName]! + amount;
+              aggregatedExpenses[categoryName] =
+                  aggregatedExpenses[categoryName]! + amount;
             } else {
               aggregatedExpenses[categoryName] = amount;
             }
@@ -55,14 +60,16 @@ class BudgetScreen extends StatelessWidget {
         }).toList();
 
         // 3. Sort by spent amount (Descending)
-        breakdownItems.sort((a, b) => (b['spent'] as double).compareTo(a['spent'] as double));
+        breakdownItems.sort(
+          (a, b) => (b['spent'] as double).compareTo(a['spent'] as double),
+        );
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             buildOverallBudgetCard(
               // Using calculatedTotalSpent from all transactions for accuracy
-              spent: calculatedTotalSpent, 
+              spent: calculatedTotalSpent,
               total: user.monthlyIncome,
               currency: user.currencySymbol,
             ),
@@ -82,14 +89,8 @@ class BudgetScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             breakdownItems.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Center(
-                      child: Text(
-                        'No categories set up yet.',
-                        style: TextStyle(color: CustomColors.secondaryText),
-                      ),
-                    ),
+                ? Expanded(
+                    child: EmptyStateWidget(title: "No Categories Set Up Yet"),
                   )
                 : Expanded(
                     child: ListView.builder(

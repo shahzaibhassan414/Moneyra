@@ -40,6 +40,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
       );
 
       if (credential.user != null) {
+
         await FirebaseFirestore.instance
             .collection('users')
             .doc(credential.user!.uid)

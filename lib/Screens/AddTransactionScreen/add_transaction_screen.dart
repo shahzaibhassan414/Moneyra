@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:moneyra/Models/category_model.dart';
 import 'package:moneyra/Models/user_model.dart';
+import 'package:moneyra/Utils/currency_formatter.dart';
 import 'package:moneyra/Utils/feedback_utils.dart';
 import '../../Constants/Constants.dart';
 import '../../Constants/custom_colors.dart';
@@ -72,27 +73,34 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         if (widget.transactionToEdit != null) {
           // UPDATE MODE
           final String txId = widget.transactionToEdit!['id'];
-          final double oldAmount = double.parse(widget.transactionToEdit!['amount'].toString());
+          final double oldAmount = double.parse(
+            widget.transactionToEdit!['amount'].toString(),
+          );
           final String oldType = widget.transactionToEdit!['type'] ?? 'expense';
 
           // 1. Update the transaction
-          await FirebaseFirestore.instance.collection('transactions').doc(txId).update({
-            'amount': newAmount,
-            'category': _selectedCategory,
-            'note': _noteController.text.trim(),
-            'date': Timestamp.fromDate(_selectedDate),
-          });
+          await FirebaseFirestore.instance
+              .collection('transactions')
+              .doc(txId)
+              .update({
+                'amount': newAmount,
+                'category': _selectedCategory,
+                'note': _noteController.text.trim(),
+                'date': Timestamp.fromDate(_selectedDate),
+              });
 
           // 2. Adjust User Balance (Subtract old, add new)
           final double diff = newAmount - oldAmount;
           if (oldType == 'income') {
-            await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-              'monthlyIncome': FieldValue.increment(diff),
-            });
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .update({'monthlyIncome': FieldValue.increment(diff)});
           } else {
-            await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-              'monthlyExpense': FieldValue.increment(diff),
-            });
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .update({'monthlyExpense': FieldValue.increment(diff)});
           }
         } else {
           // ADD MODE
@@ -106,9 +114,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-          await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-            'monthlyExpense': FieldValue.increment(newAmount),
-          });
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .update({'monthlyExpense': FieldValue.increment(newAmount)});
         }
 
         await userController.refreshAllData();
@@ -183,22 +192,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         backgroundColor: CustomColors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: CustomColors.primaryText),
+          icon: const Icon(
+            Icons.close_rounded,
+            color: CustomColors.primaryText,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           isEdit ? 'Edit Transaction' : 'Add Transaction',
-          style: const TextStyle(color: CustomColors.primaryText, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: CustomColors.primaryText,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            if (!isEdit) ...[
-              _buildAiSection(),
-              const SizedBox(height: 32),
-            ],
+            if (!isEdit) ...[_buildAiSection(), const SizedBox(height: 32)],
 
             CustomTextField(
               label: 'Amount',
@@ -216,17 +228,22 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               alignment: Alignment.centerLeft,
               child: Text(
                 'Category',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: CustomColors.primaryText),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: CustomColors.primaryText,
+                ),
               ),
             ),
             const SizedBox(height: 12),
-            
+
             Obx(() {
               final user = userController.user.value;
-              final List<CategoryModel> cats = user?.additionalCategories.isNotEmpty == true 
-                  ? user!.additionalCategories 
+              final List<CategoryModel> cats =
+                  user?.additionalCategories.isNotEmpty == true
+                  ? user!.additionalCategories
                   : Constants.transactionCategories;
-              
+
               if (!cats.any((c) => c.name == _selectedCategory)) {
                 _selectedCategory = cats.first.name;
               }
@@ -250,6 +267,17 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             Text(cat.emoji),
                             const SizedBox(width: 12),
                             Text(cat.name),
+
+                            Expanded(
+                                child: Text(
+                                  textAlign: TextAlign.end,
+                              CurrencyFormatter.format(cat.budget),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: CustomColors.secondaryText,
+                              ),
+                            )),
+                            const SizedBox(width: 12),
                           ],
                         ),
                       );
@@ -264,10 +292,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               );
             }),
 
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddCategoryScreen(),
+                    ),
+                  );
+                },
+                child: Text("Add Category"),
+              ),
+            ),
+
             const SizedBox(height: 24),
             _buildDatePicker(),
             const SizedBox(height: 24),
-            
+
             CustomTextField(
               label: 'Note (Optional)',
               hint: 'What was this for?',
@@ -284,9 +327,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: const BorderSide(color: CustomColors.grey200),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('Cancel', style: TextStyle(color: CustomColors.secondaryText)),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: CustomColors.secondaryText),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -318,9 +366,19 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         children: [
           const Row(
             children: [
-              Icon(Icons.auto_awesome_rounded, color: CustomColors.gold, size: 20),
+              Icon(
+                Icons.auto_awesome_rounded,
+                color: CustomColors.gold,
+                size: 20,
+              ),
               SizedBox(width: 8),
-              Text('AI Quick Add', style: TextStyle(fontWeight: FontWeight.bold, color: CustomColors.primaryBlue)),
+              Text(
+                'AI Quick Add',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: CustomColors.primaryBlue,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -333,9 +391,18 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               border: InputBorder.none,
               filled: true,
               fillColor: CustomColors.white,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: CustomColors.grey100)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: CustomColors.primaryBlue)),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: CustomColors.grey100),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: CustomColors.primaryBlue),
+              ),
             ),
           ),
         ],
@@ -348,7 +415,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       children: [
         const Align(
           alignment: Alignment.centerLeft,
-          child: Text('Date', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: CustomColors.primaryText)),
+          child: Text(
+            'Date',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: CustomColors.primaryText,
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         InkWell(
@@ -362,9 +436,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today_rounded, color: CustomColors.primaryBlue, size: 20),
+                const Icon(
+                  Icons.calendar_today_rounded,
+                  color: CustomColors.primaryBlue,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
-                Text('${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}', style: const TextStyle(fontSize: 16)),
+                Text(
+                  '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                  style: const TextStyle(fontSize: 16),
+                ),
               ],
             ),
           ),

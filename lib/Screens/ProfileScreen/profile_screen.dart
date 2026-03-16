@@ -1,7 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:moneyra/Controllers/user_controller.dart';
 import 'package:moneyra/Screens/AuthScreen/auth_screen.dart';
 import 'package:moneyra/Screens/ProfileScreen/Widgets/profile_header_widget.dart';
+import 'package:moneyra/Services/export_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../Constants/custom_colors.dart';
 import '../../Utils/custom_button_red.dart';
@@ -20,6 +23,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  final UserController userController = Get.find<UserController>();
 
   bool _budgetAlerts = true;
   bool _aiSuggestions = true;
@@ -43,6 +47,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _handleExport() async {
+    try {
+      FeedbackUtils.showInfo(context, 'Preparing your data...');
+      
+      // Calculate position for iPad popover
+      final RenderBox? box = context.findRenderObject() as RenderBox?;
+      final Rect? sharePositionOrigin = box != null 
+          ? box.localToGlobal(Offset.zero) & box.size 
+          : null;
+
+      await ExportService.exportToCsv(
+        userController.allTransactions,
+        sharePositionOrigin: sharePositionOrigin,
+      );
+    } catch (e, s) {
+      print(e);
+      print(s);
+      FeedbackUtils.showInfo(context, 'Export failed: ${e.toString()}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,33 +75,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            ProfileHeaderWidget(),
+            const ProfileHeaderWidget(),
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  ProfileFinancialPreferences(),
-                  const SizedBox(height: 24),
-                  ProfileSectionTitle(
-                    title: 'Notifications',
-                    children: [
-                      CustomToggleButton(
-                        title: 'Budget Alerts',
-                        value: _budgetAlerts,
-                        onChanged: (v) => setState(() => _budgetAlerts = v),
-                      ),
-                      CustomToggleButton(
-                        title: 'AI Suggestions',
-                        value: _aiSuggestions,
-                        onChanged: (v) => setState(() => _aiSuggestions = v),
-                      ),
-                      CustomToggleButton(
-                        title: 'Monthly Reports',
-                        value: _monthlyReports,
-                        onChanged: (v) => setState(() => _monthlyReports = v),
-                      ),
-                    ],
-                  ),
+                  const ProfileFinancialPreferences(),
+                  // const SizedBox(height: 24),
+                  // ProfileSectionTitle(
+                  //   title: 'Notifications',
+                  //   children: [
+                  //     CustomToggleButton(
+                  //       title: 'Budget Alerts',
+                  //       value: _budgetAlerts,
+                  //       onChanged: (v) => setState(() => _budgetAlerts = v),
+                  //     ),
+                  //     CustomToggleButton(
+                  //       title: 'AI Suggestions',
+                  //       value: _aiSuggestions,
+                  //       onChanged: (v) => setState(() => _aiSuggestions = v),
+                  //     ),
+                  //     CustomToggleButton(
+                  //       title: 'Monthly Reports',
+                  //       value: _monthlyReports,
+                  //       onChanged: (v) => setState(() => _monthlyReports = v),
+                  //     ),
+                  //   ],
+                  // ),
                   const SizedBox(height: 24),
                   ProfileSectionTitle(
                     title: 'Data & Privacy',
@@ -84,14 +109,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       SettingsTile(
                         icon: Icons.ios_share_outlined,
                         title: 'Export Financial Data',
+                        onTap: _handleExport,
                       ),
                       SettingsTile(
                         icon: Icons.sync_outlined,
                         title: 'Backup & Sync',
+                        onTap: () => FeedbackUtils.showInfo(context, 'Coming soon!'),
                       ),
                       SettingsTile(
                         icon: Icons.security_outlined,
                         title: 'Privacy Policy',
+                        onTap: () => FeedbackUtils.showInfo(context, 'Redirecting to policy...'),
                       ),
                     ],
                   ),
@@ -102,14 +130,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       SettingsTile(
                         icon: Icons.help_outline,
                         title: 'Contact Support',
+                        onTap: () {},
                       ),
                       SettingsTile(
                         icon: Icons.feedback_outlined,
                         title: 'Send Feedback',
+                        onTap: () {},
                       ),
                       SettingsTile(
                         icon: Icons.star_outline,
                         title: 'Rate the App',
+                        onTap: () {},
                       ),
                     ],
                   ),

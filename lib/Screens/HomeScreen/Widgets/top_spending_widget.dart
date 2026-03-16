@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:moneyra/Controllers/user_controller.dart';
 import 'package:moneyra/Constants/Constants.dart';
 import '../../../Constants/custom_colors.dart';
+import '../../../Utils/empty_state_widget.dart';
 import 'home_top_spending_row.dart';
 
 class TopSpendingWidget extends StatelessWidget {
@@ -26,15 +27,7 @@ class TopSpendingWidget extends StatelessWidget {
         const SizedBox(height: 16),
         Obx(() {
           if (userController.topExpenses.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: Text(
-                  'No spending data yet.',
-                  style: TextStyle(color: CustomColors.secondaryText),
-                ),
-              ),
-            );
+            return EmptyStateWidget(title: "No Spending Data Yet",);
           }
 
           Map<String, double> aggregatedExpenses = {};
@@ -56,6 +49,7 @@ class TopSpendingWidget extends StatelessWidget {
           return ListView.builder(
             shrinkWrap: true,
             primary: false,
+            padding: EdgeInsets.zero,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: sortedCategories.length > 5 ? 5 : sortedCategories.length,
             itemBuilder: (context, index) {

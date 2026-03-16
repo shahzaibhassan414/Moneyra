@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:currency_picker/currency_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:moneyra/Controllers/user_controller.dart';
 import 'package:moneyra/Utils/currency_formatter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../Constants/Constants.dart';
@@ -22,6 +24,7 @@ class AdditionalDataScreen extends StatefulWidget {
 
 class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  final UserController userController = Get.find<UserController>();
 
   final _incomeController = AmountFormatterController();
   bool _isLoading = false;
@@ -33,18 +36,26 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
 
   Future<void> _saveAdditionalData() async {
     final SharedPreferences prefs = await _prefs;
+    final incomeText = _incomeController.text.replaceAll(',', '');
+
+    if (incomeText.isEmpty) {
+      FeedbackUtils.showInfo(context, 'Please enter your monthly income');
+      return;
+    }
+
+    final double incomeAmount = double.tryParse(incomeText) ?? 0.0;
+
     setState(() => _isLoading = true);
 
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
+        // 1. Update user profile in Firestore
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .update({
-              'monthlyIncome':
-                  double.tryParse(_incomeController.text.replaceAll(',', '')) ??
-                  0.0,
+              'monthlyIncome': incomeAmount,
               'monthlyExpense': 0.0,
               'currency': _selectedCurrency,
               'currencySymbol': _currencySymbol,
@@ -53,6 +64,21 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                   .toList(),
               'isSetupComplete': true,
             });
+
+        // 2. Create an initial income transaction record
+        await FirebaseFirestore.instance.collection('transactions').add({
+          'userId': user.uid,
+          'amount': incomeAmount,
+          'category': 'Salary',
+          'note': 'Initial income setup',
+          'type': 'income',
+          'date': Timestamp.now(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // 3. THIS IS THE KEY FIX: Refresh the GetX Controller data BEFORE navigating
+        // This ensures the Home screen has the data ready in memory immediately
+        await userController.refreshAllData();
 
         if (mounted) {
           prefs.setBool("isLogin", true);
@@ -104,9 +130,7 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: isDark
-                        ? CustomColors.white
-                        : CustomColors.primaryText,
+                    color: isDark ? CustomColors.white : CustomColors.primaryText,
                   ),
                 ),
               ],
@@ -126,11 +150,7 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
             CustomButton(
               text: 'Confirm',
               onPressed: () {
-                final amount =
-                    double.tryParse(
-                      budgetController.text.replaceAll(',', ''),
-                    ) ??
-                    0.0;
+                final amount = double.tryParse(budgetController.text.replaceAll(',', '')) ?? 0.0;
                 setState(() {
                   _selectedCategories.add(
                     CategoryModel(
@@ -151,8 +171,10 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: CustomColors.backgroundGray,
+      backgroundColor: isDark ? const Color(0xFF121212) : CustomColors.backgroundGray,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -166,17 +188,14 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: CustomColors.primaryBlue,
+                  color: isDark ? CustomColors.white : CustomColors.primaryBlue,
                 ),
               ),
               const SizedBox(height: 12),
               const Text(
                 'Help us tailor Moneyra to your needs',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: CustomColors.secondaryText,
-                ),
+                style: TextStyle(fontSize: 16, color: CustomColors.secondaryText),
               ),
               const SizedBox(height: 48),
               CustomTextField(
@@ -217,24 +236,19 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                       });
                     },
                     theme: CurrencyPickerThemeData(
-                      backgroundColor: CustomColors.white,
-                      titleTextStyle: TextStyle(
-                        color: CustomColors.primaryText,
-                      ),
-                      subtitleTextStyle: const TextStyle(
-                        color: CustomColors.secondaryText,
-                      ),
-                      bottomSheetHeight:
-                          MediaQuery.of(context).size.height * 0.7,
+                      backgroundColor: isDark ? const Color(0xFF1E1E1E) : CustomColors.white,
+                      titleTextStyle: TextStyle(color: isDark ? CustomColors.white : CustomColors.primaryText),
+                      subtitleTextStyle: const TextStyle(color: CustomColors.secondaryText),
+                      bottomSheetHeight: MediaQuery.of(context).size.height * 0.7,
                     ),
                   );
                 },
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: CustomColors.white,
+                    color: isDark ? const Color(0xFF1E1E1E) : CustomColors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: CustomColors.grey100),
+                    border: Border.all(color: isDark ? Colors.transparent : CustomColors.grey100),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -243,13 +257,10 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                         '$_currencySymbol - $_currencyName ($_selectedCurrency)',
                         style: TextStyle(
                           fontSize: 16,
-                          color: CustomColors.primaryText,
+                          color: isDark ? CustomColors.white : CustomColors.primaryText,
                         ),
                       ),
-                      const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: CustomColors.secondaryText,
-                      ),
+                      const Icon(Icons.keyboard_arrow_down_rounded, color: CustomColors.secondaryText),
                     ],
                   ),
                 ),
@@ -276,22 +287,16 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                 itemCount: Constants.transactionCategories.length,
                 itemBuilder: (context, index) {
                   final cat = Constants.transactionCategories[index];
-                  bool isSelected = _selectedCategories.any(
-                    (c) => c.name == cat.name,
-                  );
+                  bool isSelected = _selectedCategories.any((c) => c.name == cat.name);
                   CategoryModel? selectedInstance = isSelected
-                      ? _selectedCategories.firstWhere(
-                          (c) => c.name == cat.name,
-                        )
+                      ? _selectedCategories.firstWhere((c) => c.name == cat.name)
                       : null;
 
                   return InkWell(
                     onTap: () {
                       if (isSelected) {
                         setState(() {
-                          _selectedCategories.removeWhere(
-                            (c) => c.name == cat.name,
-                          );
+                          _selectedCategories.removeWhere((c) => c.name == cat.name);
                         });
                       } else {
                         _showBudgetBottomSheet(cat);
@@ -300,26 +305,18 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? CustomColors.primaryBlue.withValues(alpha: 0.08)
-                            : (CustomColors.white),
+                        color: isSelected ? CustomColors.primaryBlue.withOpacity(0.08) : (isDark ? const Color(0xFF1E1E1E) : CustomColors.white),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isSelected
-                              ? CustomColors.primaryBlue
-                              : CustomColors.grey100,
+                          color: isSelected ? CustomColors.primaryBlue : (isDark ? Colors.transparent : CustomColors.grey100),
                         ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: CustomColors.black.withValues(
-                                    alpha: 0.03,
-                                  ),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ]
-                            : null,
+                        boxShadow: isSelected ? [
+                          BoxShadow(
+                            color: CustomColors.black.withOpacity(0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ] : null,
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -334,7 +331,7 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: CustomColors.primaryText,
+                              color: isDark ? CustomColors.white : CustomColors.primaryText,
                             ),
                           ),
                           if (isSelected) ...[
