@@ -4,6 +4,7 @@ import 'package:moneyra/Screens/HomeScreen/Widgets/top_spending_widget.dart';
 import '../../Constants/custom_colors.dart';
 import '../../Controllers/user_controller.dart';
 import '../../Utils/AppBars/app_bar_home_screen.dart';
+import '../AddIncomeScreen/add_income_screen.dart';
 import '../AddTransactionScreen/add_transaction_screen.dart';
 import 'Widgets/home_ai_insights_card.dart';
 import 'Widgets/home_balance_card.dart';
@@ -60,6 +61,12 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: HomeOverviewCard(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AddIncomeScreen()),
+                        );
+                      },
                       title: 'Income',
                       amount: user?.monthlyIncome.toString() ?? "0",
                       percentage: '+12%',
@@ -71,6 +78,12 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: HomeOverviewCard(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AddTransactionScreen()),
+                        );
+                      },
                       title: 'Expenses',
                       amount: user?.monthlyExpense.toString() ?? "0",
                       percentage: '-5%',
@@ -83,8 +96,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
 
-
-              TopSpendingWidget(),
+              const TopSpendingWidget(),
 
               const SizedBox(height: 32),
 
