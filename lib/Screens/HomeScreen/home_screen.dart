@@ -221,7 +221,7 @@ class HomeScreen extends StatelessWidget {
                   
                   if (userController.aiInsights.isEmpty && !userController.isInsightsLoading.value)
                     const HomeAiInsightsCard(
-                      text: "Add some transactions to see AI insights!",
+                      text: "Add some transactions to see AI insights! ",
                     )
                   else
                     SingleChildScrollView(
