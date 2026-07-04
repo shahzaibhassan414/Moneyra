@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import '../Models/user_model.dart';
 
 class UserController extends GetxController {
@@ -14,9 +16,16 @@ class UserController extends GetxController {
   var topExpenses = <Map<String, dynamic>>[].obs;
   var allTransactions = <Map<String, dynamic>>[].obs;
   
-  // New: Monthly tracking
+  // Monthly tracking
   var thisMonthIncome = 0.0.obs;
   var thisMonthExpense = 0.0.obs;
+
+  // AI Insights
+  var aiInsights = <String>[].obs;
+  var isInsightsLoading = false.obs;
+
+  // Gemini API Key
+  final String _apiKey = "AIzaSyCSQSSiMsr7__pRsYSaJzNfSfTc_TS0XKs";
 
   StreamSubscription? _userSubscription;
   StreamSubscription? _transactionSubscription;
@@ -33,11 +42,6 @@ class UserController extends GetxController {
     });
   }
 
-  DateTime _getStartOfMonth() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, 1);
-  }
-
   void _startListening(String uid) {
     print('UserController: Listening for data...');
 
@@ -48,14 +52,12 @@ class UserController extends GetxController {
       }
     });
 
-    final startOfMonth = _getStartOfMonth();
-    
     _transactionSubscription?.cancel();
     _transactionSubscription = _firestore
         .collection('transactions')
         .where('userId', isEqualTo: uid)
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
         .orderBy('date', descending: true)
+        .limit(50) // Fetch last 50 transactions for better context
         .snapshots()
         .listen((query) {
       allTransactions.value = query.docs.map((doc) {
@@ -64,21 +66,7 @@ class UserController extends GetxController {
         return data;
       }).toList();
 
-      // Reset monthly totals
-      double incomeSum = 0.0;
-      double expenseSum = 0.0;
-
-      for (var tx in allTransactions) {
-        double amount = double.tryParse(tx['amount'].toString()) ?? 0.0;
-        if (tx['type'] == 'income') {
-          incomeSum += amount;
-        } else {
-          expenseSum += amount;
-        }
-      }
-
-      thisMonthIncome.value = incomeSum;
-      thisMonthExpense.value = expenseSum;
+      _calculateMonthlyTotals();
 
       List<Map<String, dynamic>> expenses = allTransactions
           .where((tx) => tx['type'] == 'expense')
@@ -91,7 +79,87 @@ class UserController extends GetxController {
       });
 
       topExpenses.value = expenses.take(5).toList();
+
+      // Generate insights if they are empty or transactions updated
+      if (allTransactions.isNotEmpty && aiInsights.isEmpty && !isInsightsLoading.value) {
+        generateAiInsights();
+      }
     });
+  }
+
+  void _calculateMonthlyTotals() {
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+    
+    double incomeSum = 0.0;
+    double expenseSum = 0.0;
+
+    for (var tx in allTransactions) {
+      final txDate = (tx['date'] as Timestamp).toDate();
+      // Only sum transactions from the current month
+      if (txDate.isAfter(startOfMonth) || txDate.isAtSameMomentAs(startOfMonth)) {
+        double amount = double.tryParse(tx['amount'].toString()) ?? 0.0;
+        if (tx['type'] == 'income') {
+          incomeSum += amount;
+        } else {
+          expenseSum += amount;
+        }
+      }
+    }
+
+    thisMonthIncome.value = incomeSum;
+    thisMonthExpense.value = expenseSum;
+  }
+
+  Future<void> generateAiInsights() async {
+    if (allTransactions.isEmpty || isInsightsLoading.value) return;
+
+    isInsightsLoading.value = true;
+    try {
+      final model = GenerativeModel(
+        model: 'gemini-1.5-flash',
+        apiKey: _apiKey,
+      );
+
+      final txSummary = allTransactions.take(20).map((tx) {
+        final date = (tx['date'] as Timestamp).toDate().toString().split(' ')[0];
+        return "$date: ${tx['type']} ${tx['amount']} on ${tx['category']} (${tx['note']})";
+      }).join("\n");
+
+      final prompt = """
+      You are a financial advisor. Here is a summary of the user's recent transactions:
+      $txSummary
+      
+      Based on this data, provide 2-3 short, actionable financial insights or tips.
+      Each tip must be a single, friendly sentence.
+      
+      Return ONLY a JSON array of strings. 
+      Example:
+      ["You spent 15% more on coffee this week than last week.", "Consider setting a budget for groceries."]
+      """;
+
+      final response = await model.generateContent([Content.text(prompt)]);
+      
+      if (response.text != null) {
+        String cleanedJson = response.text!.trim();
+        // Remove markdown formatting if present
+        if (cleanedJson.contains('```')) {
+          cleanedJson = cleanedJson.replaceAll(RegExp(r'```json|```'), '').trim();
+        }
+        
+        final dynamic decoded = jsonDecode(cleanedJson);
+        if (decoded is List) {
+          aiInsights.value = decoded.map((e) => e.toString()).toList();
+        }
+      }
+    } catch (e) {
+      print('AI Insight Error: $e');
+      if (aiInsights.isEmpty) {
+        aiInsights.value = ["Add more transactions to see AI insights!"];
+      }
+    } finally {
+      isInsightsLoading.value = false;
+    }
   }
 
   void _stopListening() {
@@ -100,6 +168,7 @@ class UserController extends GetxController {
     user.value = null;
     allTransactions.clear();
     topExpenses.clear();
+    aiInsights.clear();
     thisMonthIncome.value = 0.0;
     thisMonthExpense.value = 0.0;
   }
@@ -108,6 +177,7 @@ class UserController extends GetxController {
     final uid = _auth.currentUser?.uid;
     if (uid != null) {
       _startListening(uid);
+      await generateAiInsights();
     }
   }
 

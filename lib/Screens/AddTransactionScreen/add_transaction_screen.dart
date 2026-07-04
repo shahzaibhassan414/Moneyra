@@ -1,6 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:moneyra/Models/category_model.dart';
 import 'package:moneyra/Models/user_model.dart';
 import 'package:moneyra/Utils/currency_formatter.dart';
@@ -27,10 +30,15 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final TextEditingController _aiController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isAiLoading = false;
   late String _selectedCategory;
   DateTime _selectedDate = DateTime.now();
+  Timer? _debounce;
 
   final UserController userController = Get.find<UserController>();
+
+  // Your Gemini API Key
+  final String _apiKey = "AIzaSyCSQSSiMsr7__pRsYSaJzNfSfTc_TS0XKs";
 
   @override
   void initState() {
@@ -38,16 +46,20 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     _initializeData();
   }
 
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
   void _initializeData() {
     if (widget.transactionToEdit != null) {
-      // Edit Mode
       final tx = widget.transactionToEdit!;
       _amountController.text = tx['amount'].toString();
       _noteController.text = tx['note'] ?? '';
       _selectedCategory = tx['category'];
       _selectedDate = (tx['date'] as dynamic)?.toDate() ?? DateTime.now();
     } else {
-      // Add Mode
       final user = userController.user.value;
       if (user != null && user.additionalCategories.isNotEmpty) {
         _selectedCategory = user.additionalCategories.first.name;
@@ -55,6 +67,99 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         _selectedCategory = Constants.transactionCategories.first.name;
       }
     }
+  }
+
+  Future<void> _callGeminiAI(String text) async {
+    // Basic check to ensure key was updated
+    if (_apiKey.startsWith("YOUR_")) return;
+
+    setState(() => _isAiLoading = true);
+
+    try {
+      final model = GenerativeModel(
+        model: 'gemini-2.5-flash-lite',
+        apiKey: _apiKey,
+      );
+
+      final user = userController.user.value;
+      final List<String> categories = [
+        ...Constants.transactionCategories.map((c) => c.name),
+        if (user != null) ...user.additionalCategories.map((c) => c.name),
+      ];
+
+      final String todayDate = DateTime.now().toString().split(' ')[0];
+
+      final prompt =
+          """
+      You are a financial assistant. Today is $todayDate. 
+      Extract transaction details from this text: "$text".
+      Available categories: ${categories.join(', ')}.
+      
+      Instructions:
+      1. Identify the numerical amount.
+      2. Identify the category that best matches from the list provided.
+      3. Identify the date. If the user says "yesterday", calculate it based on today's date ($todayDate).
+      4. Create a short, clean note for the transaction.
+      
+      Return ONLY a valid JSON object like this:
+      {"amount": 15.50, "category": "Groceries", "date": "YYYY-MM-DD", "note": "Lunch at cafe"}
+      
+      JSON:
+      """;
+
+      final content = [Content.text(prompt)];
+      final response = await model.generateContent(content);
+
+      if (response.text != null) {
+        String cleanedJson = response.text!.trim();
+        if (cleanedJson.contains('```')) {
+          cleanedJson = cleanedJson
+              .replaceAll(RegExp(r'```json|```'), '')
+              .trim();
+        }
+
+        final data = jsonDecode(cleanedJson);
+
+        setState(() {
+          if (data['amount'] != null) {
+            _amountController.text = data['amount'].toString();
+          }
+          if (data['category'] != null) {
+            String aiCat = data['category'].toString();
+            if (categories.any((c) => c.toLowerCase() == aiCat.toLowerCase())) {
+              _selectedCategory = categories.firstWhere(
+                (c) => c.toLowerCase() == aiCat.toLowerCase(),
+              );
+            }
+          }
+          if (data['note'] != null) {
+            _noteController.text = data['note'].toString();
+          }
+          if (data['date'] != null) {
+            try {
+              _selectedDate = DateTime.parse(data['date'].toString());
+            } catch (e) {
+              debugPrint("Date parsing error: $e");
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("AI Error: $e");
+    } finally {
+      setState(() => _isAiLoading = false);
+    }
+  }
+
+  void _handleAIInput(String text) {
+    if (text.length < 5) return;
+
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 1500), () {
+      if (text.isNotEmpty) {
+        _callGeminiAI(text);
+      }
+    });
   }
 
   Future<void> _saveTransaction() async {
@@ -71,14 +176,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       final user = userController.user.value;
       if (user != null) {
         if (widget.transactionToEdit != null) {
-          // UPDATE MODE
           final String txId = widget.transactionToEdit!['id'];
           final double oldAmount = double.parse(
             widget.transactionToEdit!['amount'].toString(),
           );
           final String oldType = widget.transactionToEdit!['type'] ?? 'expense';
 
-          // 1. Update the transaction
           await FirebaseFirestore.instance
               .collection('transactions')
               .doc(txId)
@@ -89,7 +192,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 'date': Timestamp.fromDate(_selectedDate),
               });
 
-          // 2. Adjust User Balance (Subtract old, add new)
           final double diff = newAmount - oldAmount;
           if (oldType == 'income') {
             await FirebaseFirestore.instance
@@ -103,7 +205,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 .update({'monthlyExpense': FieldValue.increment(diff)});
           }
         } else {
-          // ADD MODE
           await FirebaseFirestore.instance.collection('transactions').add({
             'userId': user.uid,
             'amount': newAmount,
@@ -136,24 +237,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   String getCurrency() {
     return userController.user.value?.currencySymbol ?? '\$';
-  }
-
-  void _handleAIInput(String text) {
-    final amountRegex = RegExp(r'\$?\d+(\.\d+)?');
-    final match = amountRegex.firstMatch(text);
-
-    if (match != null) {
-      String amount = match.group(0)!.replaceAll('\$', '');
-      setState(() {
-        _amountController.text = amount;
-        if (text.toLowerCase().contains('grocery') ||
-            text.toLowerCase().contains('food')) {
-          _selectedCategory = 'Groceries';
-        } else if (text.toLowerCase().contains('bill')) {
-          _selectedCategory = 'Bills';
-        }
-      });
-    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -267,16 +350,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             Text(cat.emoji),
                             const SizedBox(width: 12),
                             Text(cat.name),
-
                             Expanded(
-                                child: Text(
-                                  textAlign: TextAlign.end,
-                              CurrencyFormatter.format(cat.budget),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: CustomColors.secondaryText,
+                              child: Text(
+                                textAlign: TextAlign.end,
+                                CurrencyFormatter.format(cat.budget),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: CustomColors.secondaryText,
+                                ),
                               ),
-                            )),
+                            ),
                             const SizedBox(width: 12),
                           ],
                         ),
@@ -303,7 +386,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     ),
                   );
                 },
-                child: Text("Add Category"),
+                child: const Text("Add Category"),
               ),
             ),
 
@@ -364,21 +447,31 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.auto_awesome_rounded,
                 color: CustomColors.gold,
                 size: 20,
               ),
-              SizedBox(width: 8),
-              Text(
+              const SizedBox(width: 8),
+              const Text(
                 'AI Quick Add',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: CustomColors.primaryBlue,
                 ),
               ),
+              const Spacer(),
+              if (_isAiLoading)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: CustomColors.primaryBlue,
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -427,6 +520,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         const SizedBox(height: 12),
         InkWell(
           onTap: () => _selectDate(context),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -443,8 +537,19 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                  style: const TextStyle(fontSize: 16),
+                  // Manual formatting to avoid extra dependency issues,
+                  // or use DateFormat if 'intl' is available
+                  "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: CustomColors.primaryText,
+                  ),
+                ),
+                const Spacer(),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: CustomColors.grey200,
+                  size: 14,
                 ),
               ],
             ),

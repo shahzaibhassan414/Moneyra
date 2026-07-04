@@ -32,189 +32,215 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: CustomColors.backgroundGray,
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              floating: true,
-              snap: true,
-              backgroundColor: CustomColors.backgroundGray,
-              elevation: 0,
-              centerTitle: true,
-              expandedHeight: 70,
-              toolbarHeight: 70,
-              leadingWidth: 70,
-              leading: Padding(
-                padding: const EdgeInsets.only(left: 20),
-                child: Obx(() {
-                  final user = userController.user.value;
-                  return Center(
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [CustomColors.primaryBlue, CustomColors.softTeal],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+      body: RefreshIndicator(
+        onRefresh: () => userController.refreshAllData(),
+        child: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverAppBar(
+                floating: true,
+                snap: true,
+                backgroundColor: CustomColors.backgroundGray,
+                elevation: 0,
+                centerTitle: true,
+                expandedHeight: 70,
+                toolbarHeight: 70,
+                leadingWidth: 70,
+                leading: Padding(
+                  padding: const EdgeInsets.only(left: 20),
+                  child: Obx(() {
+                    final user = userController.user.value;
+                    return Center(
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [CustomColors.primaryBlue, CustomColors.softTeal],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark ? CustomColors.primaryGreen.withValues(alpha: 0.5) : CustomColors.white,
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: CustomColors.primaryBlue.withValues(alpha: 0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            )
+                          ],
                         ),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDark ? CustomColors.primaryGreen.withValues(alpha: 0.5) : CustomColors.white,
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: CustomColors.primaryBlue.withValues(alpha: 0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          )
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          _getInitials(user?.fullName),
-                          style: const TextStyle(
-                            color: CustomColors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                        child: Center(
+                          child: Text(
+                            _getInitials(user?.fullName),
+                            style: const TextStyle(
+                              color: CustomColors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                }),
-              ),
-              title: Text(
-                'Moneyra',
-                style: TextStyle(
-                  color: isDark ? CustomColors.white : CustomColors.primaryBlue,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 22,
-                  letterSpacing: -0.5,
+                    );
+                  }),
                 ),
-              ),
-            ),
-          ];
-        },
-        body: Obx(() {
-          final user = userController.user.value;
-          final bool isLoading = userController.isLoading.value;
-          
-          // Use this month's aggregated values
-          final income = userController.thisMonthIncome.value;
-          final expense = userController.thisMonthExpense.value;
-          final balance = income - expense;
-
-          if (isLoading && user == null) {
-            return const Center(
-              child: CircularProgressIndicator(color: CustomColors.primaryBlue),
-            );
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Good morning, ${user?.fullName ?? "User"}!',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: CustomColors.secondaryText,
-                  ),
-                ),
-                const Text(
-                  "Here's your balance.",
+                title: Text(
+                  'Moneyra',
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: CustomColors.primaryText,
+                    color: isDark ? CustomColors.white : CustomColors.primaryBlue,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 22,
+                    letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 16),
+              ),
+            ];
+          },
+          body: Obx(() {
+            final user = userController.user.value;
+            final bool isLoading = userController.isLoading.value;
+            
+            // Use this month's aggregated values
+            final income = userController.thisMonthIncome.value;
+            final expense = userController.thisMonthExpense.value;
+            final balance = income - expense;
 
-                HomeBalanceCard(
-                  balance: balance.toString(),
-                ),
-                const SizedBox(height: 24),
+            if (isLoading && user == null) {
+              return const Center(
+                child: CircularProgressIndicator(color: CustomColors.primaryBlue),
+              );
+            }
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: HomeOverviewCard(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AddIncomeScreen(),
-                            ),
-                          );
-                        },
-                        title: 'Income',
-                        amount: income.toString(),
-                        percentage: '+12%',
-                        isPositive: true,
-                        icon: Icons.arrow_downward_rounded,
-                        color: CustomColors.lightBlue,
-                      ),
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Good morning, ${user?.fullName ?? "User"}!',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: CustomColors.secondaryText,
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: HomeOverviewCard(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AddTransactionScreen(),
-                            ),
-                          );
-                        },
-                        title: 'Expenses',
-                        amount: expense.toString(),
-                        percentage: '-5%',
-                        isPositive: false,
-                        icon: Icons.arrow_upward_rounded,
-                        color: CustomColors.warningRed,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-
-                const TopSpendingWidget(),
-
-                const SizedBox(height: 32),
-
-                const Text(
-                  'AI Insights',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: CustomColors.primaryText,
                   ),
-                ),
-                const SizedBox(height: 16),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
+                  const Text(
+                    "Here's your balance.",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: CustomColors.primaryText,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  HomeBalanceCard(
+                    balance: balance.toString(),
+                  ),
+                  const SizedBox(height: 24),
+
+                  Row(
                     children: [
-                      const HomeAiInsightsCard(
-                        text:
-                            'You spent 20% more on dining this week. Consider reducing coffee purchases by 10%.',
+                      Expanded(
+                        child: HomeOverviewCard(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AddIncomeScreen(),
+                              ),
+                            );
+                          },
+                          title: 'Income',
+                          amount: income.toString(),
+                          percentage: '+12%',
+                          isPositive: true,
+                          icon: Icons.arrow_downward_rounded,
+                          color: CustomColors.lightBlue,
+                        ),
                       ),
                       const SizedBox(width: 16),
-                      const HomeAiInsightsCard(
-                        text: 'Try saving \$50 by reducing online subscriptions.',
+                      Expanded(
+                        child: HomeOverviewCard(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AddTransactionScreen(),
+                              ),
+                            );
+                          },
+                          title: 'Expenses',
+                          amount: expense.toString(),
+                          percentage: '-5%',
+                          isPositive: false,
+                          icon: Icons.arrow_upward_rounded,
+                          color: CustomColors.warningRed,
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 80),
-              ],
-            ),
-          );
-        }),
+                  const SizedBox(height: 32),
+
+                  const TopSpendingWidget(),
+
+                  const SizedBox(height: 32),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'AI Insights',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: CustomColors.primaryText,
+                        ),
+                      ),
+                      if (userController.isInsightsLoading.value)
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: CustomColors.primaryBlue,
+                          ),
+                        )
+                      else
+                        IconButton(
+                          onPressed: () => userController.generateAiInsights(),
+                          icon: const Icon(Icons.refresh_rounded, size: 20),
+                          color: CustomColors.primaryBlue,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  if (userController.aiInsights.isEmpty && !userController.isInsightsLoading.value)
+                    const HomeAiInsightsCard(
+                      text: "Add some transactions to see AI insights!",
+                    )
+                  else
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: userController.aiInsights.map((insight) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 16),
+                            child: HomeAiInsightsCard(text: insight),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
