@@ -38,7 +38,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final UserController userController = Get.find<UserController>();
 
   // Your Gemini API Key
-  final String _apiKey = "AIzaSyCSQSSiMsr7__pRsYSaJzNfSfTc_TS0XKs";
+  final String _apiKey = "Replace by your own key";
 
   @override
   void initState() {
